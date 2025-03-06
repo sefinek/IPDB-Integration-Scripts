@@ -14,14 +14,20 @@ const pull = async () => {
 
 	try {
 		const { summary } = await git.pull();
-		log(0, `Changes: ${summary.changes}; Deletions: ${summary.insertions}; Insertions: ${summary.insertions}`);
-		await discordWebhooks(4, `**Changes:** ${summary.changes}; **Deletions:** ${summary.insertions}; **Insertions:** ${summary.insertions}`);
+		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
+		await discordWebhooks(4, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
 		log(2, err);
 	}
 
 	log(0, 'Updating submodules...');
-	await git.subModule(['update', '--init', '--recursive']);
+	try {
+		await git.subModule(['update', '--init', '--recursive']);
+		await git.subModule(['foreach', 'git checkout $(git symbolic-ref --short HEAD) && git pull']);
+		log(0, 'Submodules pulled successfully.');
+	} catch (err) {
+		log(2, err);
+	}
 };
 
 const pullAndRestart = async () => {
