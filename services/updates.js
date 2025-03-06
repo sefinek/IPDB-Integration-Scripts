@@ -10,8 +10,8 @@ const git = simpleGit();
 
 const pull = async () => {
 	await discordWebhooks(4, 'Updating the local repository in progress `(git pull)`...');
-	log(0, 'Updating the repository...');
 
+	log(0, 'Updating the repository...');
 	try {
 		const { summary } = await git.pull();
 		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
