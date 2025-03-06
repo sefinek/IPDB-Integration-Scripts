@@ -24,7 +24,6 @@ const pull = async () => {
 	try {
 		await git.subModule(['update', '--init', '--recursive']);
 		await git.subModule(['foreach', 'git checkout $(git symbolic-ref --short HEAD) && git pull']);
-		log(0, 'Submodules pulled successfully.');
 	} catch (err) {
 		log(2, err);
 	}
