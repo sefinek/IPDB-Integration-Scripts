@@ -10,7 +10,7 @@ const git = simpleGit();
 
 const pull = async () => {
 	await discordWebhooks(4, 'Updating the local repository in progress `(git pull)`...');
-	log(0, 'Running git pull...');
+	log(0, 'Updating the repository...');
 
 	try {
 		const { summary } = await git.pull();
@@ -19,6 +19,9 @@ const pull = async () => {
 	} catch (err) {
 		log(2, err);
 	}
+
+	log(0, 'Updating submodules...');
+	await git.subModule(['update', '--init', '--recursive']);
 };
 
 const pullAndRestart = async () => {
