@@ -17,7 +17,7 @@ const pull = async () => {
 		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
 		await discordWebhooks(4, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
-		log(2, err);
+		return log(2, err);
 	}
 
 	log(0, 'Updating submodules...');
