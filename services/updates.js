@@ -1,4 +1,4 @@
-const { AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
+const { SERVER_ID, AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
 
 const simpleGit = require('simple-git');
 const { CronJob } = require('cron');
@@ -30,6 +30,8 @@ const pull = async () => {
 };
 
 const pullAndRestart = async () => {
+	if (SERVER_ID === 'development') return;
+
 	try {
 		await pull();
 		await restartApp();
