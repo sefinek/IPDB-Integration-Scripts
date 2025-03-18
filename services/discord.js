@@ -27,10 +27,10 @@ module.exports = async (id, description) => {
 		data: {
 			embeds: [{
 				title: `${logType.emoji} ${SERVER_ID}: ${logType.type} [ID ${id}]`,
-				description,
+				description: description.replace(/(\b\w+=)/g, '**$1**'),
 				color: logType.color,
 				footer: {
-					text: `Date: ${new Date().toLocaleString()} | ${repoFull}`,
+					text: `${new Date().toLocaleString()} • ${repoFull}`,
 				},
 				timestamp: new Date().toISOString(),
 			}],
