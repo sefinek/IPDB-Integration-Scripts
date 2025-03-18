@@ -1,41 +1,44 @@
 const { networkInterfaces } = require('node:os');
+const { CronJob } = require('cron');
 const { get } = require('./axios.js');
 const isLocalIP = require('../utils/isLocalIP.js');
 const log = require('../utils/log.js');
-const { SERVER_ID, IP_REFRESH_INTERVAL } = require('../../config.js').MAIN;
+const { SERVER_ID, IP_REFRESH_SCHEDULE } = require('../../config.js').MAIN;
 
-const ipAddrList = new Set();
+const ipAddrSet = new Set();
 
 const fetchIPv4Address = async () => {
 	try {
 		const { data } = await get('https://api.sefinek.net/api/v2/ip');
-		if (data?.success && data?.message) ipAddrList.add(data.message);
-	} catch (err) {
-		log(2, `Error fetching IPv4 address: ${err.message}`);
+		if (data?.success && data?.message) ipAddrSet.add(data.message);
+	} catch ({ message }) {
+		log(2, `Error fetching IPv4 address: ${message}`);
 	}
 };
 
 const fetchIPv6Address = () => {
 	try {
-		Object.values(networkInterfaces()).flat().forEach(({ address, internal }) => {
-			if (!internal && address && !isLocalIP(address)) ipAddrList.add(address);
-		});
-	} catch (err) {
-		log(2, `Error fetching IPv6 address: ${err.message}`);
+		for (const iface of Object.values(networkInterfaces()).flat()) {
+			if (iface && !iface.internal && iface.address && !isLocalIP(iface.address)) ipAddrSet.add(iface.address);
+		}
+	} catch ({ message }) {
+		log(2, `Error fetching IPv6 address: ${message}`);
 	}
 };
 
 const fetchServerIPs = async () => {
-	ipAddrList.clear();
+	ipAddrSet.clear();
 	await fetchIPv4Address();
 	fetchIPv6Address();
 };
 
 (async () => {
 	await fetchServerIPs();
-	setInterval(fetchServerIPs, IP_REFRESH_INTERVAL);
+	new CronJob(IP_REFRESH_SCHEDULE || '*/20 * * * *', fetchServerIPs, null, true, 'UTC');
 
-	if (SERVER_ID === 'development') console.debug(ipAddrList);
+	if (SERVER_ID === 'development') {
+		console.debug([...ipAddrSet]);
+	}
 })();
 
-module.exports = () => Array.from(ipAddrList);
+module.exports = () => [...ipAddrSet];
