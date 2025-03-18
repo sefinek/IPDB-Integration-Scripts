@@ -35,7 +35,7 @@ const fetchServerIPs = async () => {
 	await fetchServerIPs();
 	setInterval(fetchServerIPs, IP_REFRESH_INTERVAL);
 
-	 console.debug(ipAddrList);
+	// console.debug(ipAddrList);
 })();
 
 module.exports = () => Array.from(ipAddrList);
