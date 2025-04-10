@@ -10,5 +10,5 @@ module.exports = (level, msg, discord = 0) => {
 	const { method, label } = levels[level] || { method: 'log', label: '[N/A]' };
 	console[method](`${label} ${msg}`);
 
-	if (level >= 1 || discord) discordWebhooks(level, msg).catch(console.error);
+	if (discord) discordWebhooks(level, msg).catch(console.error);
 };
