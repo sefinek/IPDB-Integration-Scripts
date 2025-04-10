@@ -11,19 +11,18 @@ const sendWebhook = async () => {
 	try {
 		await fs.access(CACHE_FILE);
 	} catch {
-		return log(2, `Cache file not found: ${CACHE_FILE}`);
+		return log(2, `Cache file not found: ${CACHE_FILE}`, 1);
 	}
 
 	let data;
 	try {
 		data = (await fs.readFile(CACHE_FILE, 'utf8')).trim();
 	} catch (err) {
-		return log(2, `Error reading file: ${err.message}`);
+		return log(2, `Error reading file: ${err.message}`, 1);
 	}
 
 	if (!data) {
-		log(0, `Cache file is empty: ${CACHE_FILE}`);
-		return discordWebhooks(4, `Cache file is empty: \`${CACHE_FILE}\``);
+		log(0, `Cache file is empty: ${CACHE_FILE}`, 1);
 	}
 
 	try {
@@ -69,5 +68,5 @@ const sendWebhook = async () => {
 
 module.exports = async () => {
 	// await sendWebhook();
-	new CronJob('0 0 * * *', sendWebhook, null, true, 'UTC');
+	new CronJob('0 0 * * *', sendWebhook, null, true);
 };

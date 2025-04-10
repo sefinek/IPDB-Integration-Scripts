@@ -6,9 +6,9 @@ const levels = {
 	2: { method: 'error', label: '[FAIL]' },
 };
 
-module.exports = (level, msg) => {
+module.exports = (level, msg, discord = 0) => {
 	const { method, label } = levels[level] || { method: 'log', label: '[N/A]' };
 	console[method](`${label} ${msg}`);
 
-	if (level >= 1) discordWebhooks(level, msg).catch(console.error);
+	if (level >= 1 || discord) discordWebhooks(level, msg).catch(console.error);
 };
