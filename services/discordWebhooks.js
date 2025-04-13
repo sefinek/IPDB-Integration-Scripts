@@ -1,7 +1,7 @@
 const axios = require('axios');
 const log = require('../utils/log.js');
 const { repoFull } = require('../utils/repo.js');
-const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL } = require('../config.js').MAIN;
+const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL } = require('../../config.js').MAIN;
 
 const COLORS = {
 	0: 0x59D267, // Green
