@@ -1,6 +1,6 @@
 const { exec } = require('node:child_process');
 const ecosystem = require('../../ecosystem.config.js');
-const discordWebhooks = require('./discordWebhooks.js');
+const sendWebhook = require('./discordWebhooks.js');
 const log = require('../utils/log.js');
 
 const executeCmd = cmd =>
@@ -13,7 +13,7 @@ const executeCmd = cmd =>
 
 module.exports = async () => {
 	const process = ecosystem.apps[0].name;
-	await discordWebhooks(4, `Restarting the ${process} process...`);
+	await sendWebhook(4, `Restarting the ${process} process...`);
 
 	try {
 		console.log(await executeCmd('npm install --omit=dev'));
