@@ -2,18 +2,18 @@ const simpleGit = require('simple-git');
 const { CronJob } = require('cron');
 const restartApp = require('./reloadApp.js');
 const log = require('../utils/log.js');
-const discordWebhooks = require('./discordWebhooks.js');
+const sendWebhook = require('./discordWebhooks.js');
 const { SERVER_ID, AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
 const git = simpleGit();
 
 const pull = async () => {
-	await discordWebhooks(0, 'Updating the local repository in progress `(git pull)`...');
+	await sendWebhook(0, 'Updating the local repository in progress `(git pull)`...');
 
 	log(0, 'Updating the repository...');
 	try {
 		const { summary } = await git.pull();
 		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
-		await discordWebhooks(0, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
+		await sendWebhook(0, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
 		return log(2, err);
 	}

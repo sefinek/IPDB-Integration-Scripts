@@ -1,13 +1,13 @@
 const { CronJob } = require('cron');
 const fs = require('node:fs/promises');
-const discordWebhooks = require('./discordWebhooks.js');
+const sendWebhook = require('./discordWebhooks.js');
 const log = require('../utils/log.js');
 const { CACHE_FILE } = require('../../config.js').MAIN;
 
 const formatHourRange = hour => `${hour.toString().padStart(2, '0')}:00-${hour.toString().padStart(2, '0')}:59`;
 const pluralizeReport = count => (count === 1 ? 'report' : 'reports');
 
-const sendWebhook = async () => {
+const summaryEmbed = async () => {
 	try {
 		await fs.access(CACHE_FILE);
 	} catch {
@@ -59,7 +59,7 @@ const sendWebhook = async () => {
 			.map(([hour, count]) => `${formatHourRange(parseInt(hour))}: ${count} ${pluralizeReport(count)}${topHours.includes(parseInt(hour)) ? ' 🔥' : ''}`)
 			.join('\n');
 
-		await discordWebhooks(7, `Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryString}\`\`\``);
+		await sendWebhook(7, `Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryString}\`\`\``);
 		log(0, `Reported IPs yesterday by hour:\n${summaryString}\nTotal reported IPs: ${totalReports} ${pluralizeReport(totalReports)}`);
 	} catch (err) {
 		log(2, err);
@@ -68,5 +68,5 @@ const sendWebhook = async () => {
 
 module.exports = async () => {
 	// await sendWebhook();
-	new CronJob('0 0 * * *', sendWebhook, null, true);
+	new CronJob('0 0 * * *', summaryEmbed, null, true);
 };
