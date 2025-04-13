@@ -9,13 +9,13 @@ const discordWebhooks = require('./discordWebhooks.js');
 const git = simpleGit();
 
 const pull = async () => {
-	await discordWebhooks(4, 'Updating the local repository in progress `(git pull)`...');
+	await discordWebhooks(1, 'Updating the local repository in progress `(git pull)`...');
 
 	log(0, 'Updating the repository...');
 	try {
 		const { summary } = await git.pull();
 		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
-		await discordWebhooks(4, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
+		await discordWebhooks(1, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
 		return log(2, err);
 	}

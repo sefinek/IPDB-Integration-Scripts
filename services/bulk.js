@@ -12,7 +12,7 @@ const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
 const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
 
-const ensureDirectoryExists = (filePath) => {
+const ensureDirectoryExists = filePath => {
 	const dir = path.dirname(filePath);
 	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
