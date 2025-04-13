@@ -1,6 +1,6 @@
 const { exec } = require('node:child_process');
 const ecosystem = require('../../ecosystem.config.js');
-const discordWebhooks = require('./discord.js');
+const discordWebhooks = require('./discordWebhooks.js');
 const log = require('../utils/log.js');
 
 const executeCmd = cmd =>
