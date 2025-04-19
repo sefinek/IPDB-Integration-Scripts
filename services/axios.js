@@ -12,13 +12,13 @@ const api = axios.create({
 	},
 });
 
-api.interceptors.response.use(null, async (error) => {
-	const config = error.config;
-	if (!config) return Promise.reject(error);
+api.interceptors.response.use(null, async err => {
+	const config = err.config;
+	if (!config) return Promise.reject(err);
 
 	config.__retryCount = config.__retryCount || 0;
-	if (config.__retryCount >= MAX_RETRIES || !(error.code === 'ECONNABORTED' || (error.response && error.response.status >= 500))) {
-		return Promise.reject(error);
+	if (config.__retryCount >= MAX_RETRIES || !(err.code === 'ECONNABORTED' || (err.response && err.response.status >= 500))) {
+		return Promise.reject(err);
 	}
 
 	config.__retryCount++;
