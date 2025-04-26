@@ -7,13 +7,12 @@ const LEVELS = {
 	2: { method: 'warn', label: '[!]', color: '\x1b[33m', hex: 0xFFD700 }, // Yellow
 	3: { method: 'error', label: '[X]', color: '\x1b[31m', hex: 0xFF0F31 }, // Red
 };
-
 const RESET = '\x1b[0m';
-const isDev = SERVER_ID === 'development';
+const IS_DEV = SERVER_ID === 'development';
 
 module.exports = (msg, type = 0, discord = false) => {
 	const { method, label, color, hex } = LEVELS[type] || LEVELS[0];
-	const output = isDev ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`;
+	const output = IS_DEV ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`;
 	console[method](output);
 
 	if (discord || type > 1) sendWebhook(msg, hex).catch(console.error);
