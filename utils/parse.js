@@ -1,13 +1,18 @@
 const REGEX = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)|((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{2}:\d{2}(?::\d{2})?)/;
 const MONTHS = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
 
+exports.parseNumber = (str, regex) => {
+	const parsed = str.match(regex)?.[1];
+	return parsed ? Number(parsed) : parsed;
+};
+
 const pad = n => n.toString().padStart(2, '0');
 const getCurrentUTC = () => {
 	const d = new Date();
 	return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}Z`;
 };
 
-exports.parseTimestamp = (str) => {
+exports.parseTimestamp = str => {
 	const match = str?.match(REGEX);
 	if (!match) return getCurrentUTC();
 
