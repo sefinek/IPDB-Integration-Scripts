@@ -14,7 +14,7 @@ const executeCmd = cmd =>
 		});
 	});
 
-const CMD_1 = 'install --omit=dev';
+const CMD_1 = 'npm install --omit=dev';
 const CMD_2 = `pm2 restart ${ecosystem.apps[0].name}`;
 
 module.exports = async () => {
