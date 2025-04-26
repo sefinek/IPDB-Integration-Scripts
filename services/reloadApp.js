@@ -19,6 +19,6 @@ module.exports = async () => {
 		console.log(await executeCmd('npm install --omit=dev'));
 		console.log(await executeCmd(`pm2 restart ${process}`));
 	} catch (err) {
-		log(2, err);
+		log(err);
 	}
 };

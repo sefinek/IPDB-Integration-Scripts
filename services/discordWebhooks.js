@@ -34,8 +34,8 @@ module.exports = async (id, description) => {
 
 	try {
 		const res = await axios(config);
-		if (res.status !== 204) log(1, 'Failed to deliver Discord Webhook');
+		if (res.status !== 204) log('Failed to deliver Discord Webhook (unexpected status code)', 2);
 	} catch (err) {
-		log(2, `Failed to send Discord Webhook. ${err.stack}`);
+		log(`Discord Webhook Error: ${err.stack}`, 3);
 	}
 };

@@ -15,7 +15,7 @@ const pull = async () => {
 		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
 		await sendWebhook(0, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
-		return log(2, err);
+		return log(err);
 	}
 
 	log(0, 'Updating submodules...');
@@ -23,7 +23,7 @@ const pull = async () => {
 		await git.subModule(['update', '--init', '--recursive']);
 		await git.subModule(['foreach', 'git fetch && git checkout $(git rev-parse --abbrev-ref HEAD) && git pull origin main']);
 	} catch (err) {
-		log(2, err);
+		log(err);
 	}
 };
 
@@ -34,7 +34,7 @@ const pullAndRestart = async () => {
 		await pull();
 		await restartApp();
 	} catch (err) {
-		log(2, err);
+		log(err);
 	}
 };
 

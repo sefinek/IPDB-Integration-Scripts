@@ -9,7 +9,7 @@ const ensureCacheDir = () => {
 	const dir = dirname(CACHE_FILE);
 	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true });
-		log(0, `Created missing directory for cache: ${dir}`);
+		log(`Created missing directory for cache: ${dir}`, 1);
 	}
 };
 
@@ -25,9 +25,9 @@ const loadReportedIPs = () => {
 				if (ip && !isNaN(time)) reportedIPs.set(ip, Number(time));
 			});
 
-		log(0, `Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`);
+		log(`Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`, 1);
 	} else {
-		log(0, `${CACHE_FILE} does not exist. No data to load.`);
+		log(`${CACHE_FILE} does not exist. No data to load.`);
 	}
 };
 

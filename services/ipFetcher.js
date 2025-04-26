@@ -21,24 +21,21 @@ const fetchIPAddress = async family => {
 			ipAddresses.add(data.message);
 
 			if (family === 6) {
-				if (ipv6ErrorCount > 0) {
-					log(0, `Uh, it looks like IPv6 has started working! It only succeeded after ${ipv6ErrorCount} attempts.`, 1);
-				}
-
+				if (ipv6ErrorCount > 0) log(`Uh, it looks like IPv6 has started working! It only succeeded after ${ipv6ErrorCount} attempts.`, 1);
 				ipv6ErrorCount = 0;
 			}
 		} else {
-			log(2, `Unexpected API response: ${JSON.stringify(data)}`);
+			log(`Unexpected API response: ${JSON.stringify(data)}`, 2);
 		}
 	} catch (err) {
-		log(2, `Error fetching IPv${family} address: ${err.message}`);
+		log(`Error fetching IPv${family} address: ${err.message}`, 3);
 
 		if (family === 6 && err.code === 'ENOENT') {
 			ipv6ErrorCount++;
 
 			if (ipv6ErrorCount >= 6 && !ipv6ErrorLogged) {
 				ipv6ErrorLogged = true;
-				log(0, 'It looks like your ISP hasn\'t assigned you any IPv6 address. I won\'t attempt to fetch it again.', 1);
+				log('It looks like your ISP hasn\'t assigned you any IPv6 address. I won\'t attempt to fetch it again.', 2);
 			} else {
 				await new Promise(resolve => setTimeout(resolve, 4000));
 				await fetchIPAddress(6);
