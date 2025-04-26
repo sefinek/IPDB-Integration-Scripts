@@ -2,37 +2,42 @@ const simpleGit = require('simple-git');
 const { CronJob } = require('cron');
 const restartApp = require('./reloadApp.js');
 const log = require('../utils/log.js');
-const sendWebhook = require('./discordWebhooks.js');
-const { SERVER_ID, AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
+const { AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
 const git = simpleGit();
 
 const pull = async () => {
-	await sendWebhook(0, 'Updating the local repository in progress `(git pull)`...');
+	log('Pulling the repository and submodules...');
 
-	log('Updating the repository...');
+	let mainSummary;
 	try {
-		const { summary } = await git.pull();
-		log(`Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`, 1);
-		await sendWebhook(0, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
-	} catch (err) {
-		return log(err, 3);
-	}
-
-	log('Updating submodules...');
-	try {
-		await git.subModule(['update', '--init', '--recursive']);
-		await git.subModule(['foreach', 'git fetch && git checkout $(git rev-parse --abbrev-ref HEAD) && git pull origin main']);
+		const result = await git.pull(['--recurse-submodules']);
+		mainSummary = result.summary;
 	} catch (err) {
 		log(err, 3);
+		return null;
 	}
+
+	return { mainSummary, submoduleChanges: false };
 };
 
 const pullAndRestart = async () => {
-	if (SERVER_ID === 'development') return;
-
 	try {
-		await pull();
-		await restartApp();
+		const result = await pull();
+		if (!result) return;
+
+		const { mainSummary, submoduleChanges } = result;
+		const { changes, insertions, deletions } = mainSummary;
+
+		const hasUpdates = (changes > 0 || insertions > 0 || deletions > 0 || submoduleChanges);
+		if (hasUpdates) {
+			log(`Main repo - Changes: ${changes}; Deletions: ${deletions}; Insertions: ${insertions}`, 1, true);
+			if (submoduleChanges) log('Detected updates in submodules', 1, true);
+
+			log('Updates detected (main repo or submodules), restarting app...', 1, true);
+			await restartApp();
+		} else {
+			log('Great! No new updates detected.', 1, true);
+		}
 	} catch (err) {
 		log(err, 3);
 	}
@@ -41,4 +46,4 @@ const pullAndRestart = async () => {
 // https://crontab.guru
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
 
-module.exports = pull;
+module.exports = pullAndRestart;
