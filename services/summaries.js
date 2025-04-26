@@ -11,19 +11,17 @@ const summaryEmbed = async () => {
 	try {
 		await fs.access(CACHE_FILE);
 	} catch {
-		return log(`Cache file not found: ${CACHE_FILE}`, 1);
+		return log(`Cache file not found: ${CACHE_FILE}`, 3);
 	}
 
 	let data;
 	try {
 		data = (await fs.readFile(CACHE_FILE, 'utf8')).trim();
 	} catch (err) {
-		return log(`Error reading file: ${err.message}`, 1);
+		return log(`Error reading file: ${err.message}`, 3);
 	}
 
-	if (!data) {
-		log(0, `Cache file is empty: ${CACHE_FILE}`, 1);
-	}
+	if (!data) log(`Cache file is empty: ${CACHE_FILE}`);
 
 	try {
 		const yesterday = new Date();
@@ -60,9 +58,9 @@ const summaryEmbed = async () => {
 			.join('\n');
 
 		await sendWebhook(7, `Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryString}\`\`\``);
-		log(0, `Reported IPs yesterday by hour:\n${summaryString}\nTotal reported IPs: ${totalReports} ${pluralizeReport(totalReports)}`);
+		log(`Reported IPs yesterday by hour:\n${summaryString}\nTotal reported IPs: ${totalReports} ${pluralizeReport(totalReports)}`, 1);
 	} catch (err) {
-		log(err);
+		log(err, 3);
 	}
 };
 
