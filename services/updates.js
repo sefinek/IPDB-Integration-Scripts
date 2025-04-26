@@ -28,7 +28,7 @@ const pullAndRestart = async () => {
 
 		if (hasUpdates) {
 			log(`Main repo - Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 1, true);
-			log('Updates detected, restarting app...', 1, true);
+			log('Updates detected, restarting app...', 0, true);
 
 			await restartApp();
 		} else {
