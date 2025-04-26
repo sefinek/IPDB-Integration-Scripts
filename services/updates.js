@@ -9,16 +9,16 @@ const git = simpleGit();
 const pull = async () => {
 	await sendWebhook(0, 'Updating the local repository in progress `(git pull)`...');
 
-	log(0, 'Updating the repository...');
+	log('Updating the repository...');
 	try {
 		const { summary } = await git.pull();
-		log(0, `Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`);
+		log(`Changes: ${summary.changes}; Deletions: ${summary.deletions}; Insertions: ${summary.insertions}`, 1);
 		await sendWebhook(0, `**Changes:** ${summary.changes}; **Deletions:** ${summary.deletions}; **Insertions:** ${summary.insertions}`);
 	} catch (err) {
 		return log(err, 3);
 	}
 
-	log(0, 'Updating submodules...');
+	log('Updating submodules...');
 	try {
 		await git.subModule(['update', '--init', '--recursive']);
 		await git.subModule(['foreach', 'git fetch && git checkout $(git rev-parse --abbrev-ref HEAD) && git pull origin main']);
