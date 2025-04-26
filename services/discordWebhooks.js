@@ -1,6 +1,6 @@
 const axios = require('axios');
 const log = require('../utils/log.js');
-const { repoFull } = require('../utils/repo.js');
+const { version, repoFull } = require('../utils/repo.js');
 const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL } = require('../../config.js').MAIN;
 
 module.exports = async (msg, color) => {
@@ -20,7 +20,7 @@ module.exports = async (msg, color) => {
 					.trim(),
 				color: color ?? 0x008FD1,
 				footer: {
-					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${repoFull}`,
+					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${repoFull} [v${version}]`,
 				},
 				timestamp: new Date().toISOString(),
 			}],
