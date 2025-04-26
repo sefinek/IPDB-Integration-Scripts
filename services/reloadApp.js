@@ -14,18 +14,20 @@ const executeCmd = cmd =>
 		});
 	});
 
+const CMD_1 = 'install --omit=dev';
+const CMD_2 = `pm2 restart ${ecosystem.apps[0].name}`;
+
 module.exports = async () => {
 	try {
 		// 1 - npm dependencies
-		log('Running npm install --omit=dev...', 0, true);
-		const result1 = await executeCmd('npm install --omit=dev');
+		log(`Running npm '${CMD_1}'...`, 0, true);
+		const result1 = await executeCmd(CMD_1);
 		log(result1, 0, true);
 
 		// 2 - restart
-		const process = ecosystem.apps[0].name;
-		log(`Running pm2 restart ${process}...`, 0, true);
+		log(`Running '${CMD_2}'...`, 0, true);
 
-		const result2 = await executeCmd(`pm2 restart ${process}`);
+		const result2 = await executeCmd(CMD_2);
 		log(result2, 0, true);
 	} catch (err) {
 		log(err, 3);
