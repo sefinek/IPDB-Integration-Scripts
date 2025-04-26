@@ -16,5 +16,5 @@ module.exports = (msg, type = 0, discord = false) => {
 	const output = isDev ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`;
 	console[method](output);
 
-	if (discord) sendWebhook(type, msg).catch(console.error);
+	if (discord || type > 1) sendWebhook(type, msg).catch(console.error);
 };
