@@ -32,7 +32,7 @@ const pullAndRestart = async () => {
 
 			await restartApp();
 		} else {
-			log('No updates detected.', 1, true);
+			log('Great! No updates detected', 1, true);
 		}
 	} catch (err) {
 		log(err, 3);
