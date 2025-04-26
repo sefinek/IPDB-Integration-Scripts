@@ -11,14 +11,14 @@ const summaryEmbed = async () => {
 	try {
 		await fs.access(CACHE_FILE);
 	} catch {
-		return log(2, `Cache file not found: ${CACHE_FILE}`, 1);
+		return log(`Cache file not found: ${CACHE_FILE}`, 1);
 	}
 
 	let data;
 	try {
 		data = (await fs.readFile(CACHE_FILE, 'utf8')).trim();
 	} catch (err) {
-		return log(2, `Error reading file: ${err.message}`, 1);
+		return log(`Error reading file: ${err.message}`, 1);
 	}
 
 	if (!data) {
@@ -48,7 +48,7 @@ const summaryEmbed = async () => {
 			hourlySummary[hour] = (hourlySummary[hour] || 0) + 1;
 		});
 
-		const totalReports = Object.values(hourlySummary).reduce((sum, count) => sum + count, 0);
+		const totalReports = Object.values(hourlySummary).reduce((sum, count) => sum + count);
 		const sortedEntries = Object.entries(hourlySummary).sort((a, b) => b[1] - a[1]);
 		const maxReports = sortedEntries.length > 0 ? sortedEntries[0][1] : 0;
 		const topHours = sortedEntries
@@ -62,7 +62,7 @@ const summaryEmbed = async () => {
 		await sendWebhook(7, `Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryString}\`\`\``);
 		log(0, `Reported IPs yesterday by hour:\n${summaryString}\nTotal reported IPs: ${totalReports} ${pluralizeReport(totalReports)}`);
 	} catch (err) {
-		log(2, err);
+		log(err);
 	}
 };
 

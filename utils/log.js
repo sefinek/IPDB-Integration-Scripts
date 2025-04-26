@@ -1,14 +1,20 @@
+const { SERVER_ID } = require('../../config.js').MAIN;
 const sendWebhook = require('../services/discordWebhooks.js');
 
-const levels = {
-	0: { method: 'log', label: '[INFO]' },
-	1: { method: 'warn', label: '[WARN]' },
-	2: { method: 'error', label: '[FAIL]' },
+const LEVELS = {
+	0: { method: 'info', label: '[i]', color: '\x1b[36m' }, // Cyan
+	1: { method: 'log', label: '[✓]', color: '\x1b[32m' }, // Green
+	2: { method: 'warn', label: '[!]', color: '\x1b[33m' }, // Yellow
+	3: { method: 'error', label: '[X]', color: '\x1b[31m' }, // Red
 };
 
-module.exports = (level, msg, discord = 0) => {
-	const { method, label } = levels[level] || { method: 'log', label: '[N/A]' };
-	console[method](`${label} ${msg}`);
+const RESET = '\x1b[0m';
+const isDev = SERVER_ID === 'development';
 
-	if (discord) sendWebhook(level, msg).catch(console.error);
+module.exports = (msg, type = 0, discord = false) => {
+	const { method, label, color } = LEVELS[type] || LEVELS[0];
+	const output = isDev ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`;
+	console[method](output);
+
+	if (discord) sendWebhook(type, msg).catch(console.error);
 };
