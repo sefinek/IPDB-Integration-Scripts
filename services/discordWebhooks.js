@@ -3,15 +3,10 @@ const log = require('../utils/log.js');
 const { repoFull } = require('../utils/repo.js');
 const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL } = require('../../config.js').MAIN;
 
-const COLORS = {
-	0: 0x59D267, // Green
-	1: 0xFFA91B, // Orange
-	2: 0xFF0F31, // Red
-	3: 0x266CFB, // Blue
-};
+module.exports = async (msg, color) => {
+	if (!msg || !DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL) return;
 
-module.exports = async (id, description) => {
-	if (!DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL) return;
+	const description = msg instanceof Error ? msg.stack : msg;
 
 	const config = {
 		method: 'POST',
@@ -23,7 +18,7 @@ module.exports = async (id, description) => {
 					.replace(/\p{Emoji_Presentation}/gu, '')
 					.replace(/(\b\w+=)/g, '**$1**')
 					.trim(),
-				color: COLORS[id] || 0x070709,
+				color: color ?? 0x008FD1,
 				footer: {
 					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${repoFull}`,
 				},
