@@ -7,7 +7,7 @@ const { AUTO_UPDATE_SCHEDULE } = require('../../config.js').MAIN;
 const git = simpleGit();
 
 const pull = async () => {
-	log('Pulling repository and submodules...', 0, true);
+	log('Pulling repository and submodules...');
 
 	try {
 		const { summary } = await git.pull(['--recurse-submodules']);
