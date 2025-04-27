@@ -1,5 +1,4 @@
 const axios = require('axios');
-const log = require('../utils/log.js');
 const { version, repoFull } = require('../utils/repo.js');
 const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
 const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || '';
@@ -31,8 +30,8 @@ module.exports = async (msg, color) => {
 
 	try {
 		const res = await axios(config);
-		if (res.status !== 204) log('Failed to deliver Discord Webhook (unexpected status code)', 2);
+		if (res.status !== 204) console.log('[X] Failed to deliver Discord Webhook (unexpected status code)');
 	} catch (err) {
-		log(`Discord Webhook Error: ${err.stack}`, 3);
+		console.log('[X] Discord Webhook Error:', err.stack);
 	}
 };
