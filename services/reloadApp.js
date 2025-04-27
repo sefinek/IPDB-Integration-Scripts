@@ -20,12 +20,12 @@ const CMD_2 = `pm2 restart ${ecosystem.apps[0].name}`;
 module.exports = async () => {
 	try {
 		// 1 - npm dependencies
-		log(`Running npm '${CMD_1}'...`, 0, true);
+		log(`Running npm '${CMD_1}'...`);
 		const result1 = await executeCmd(CMD_1);
 		log(result1, 0, true);
 
 		// 2 - restart
-		log(`Running '${CMD_2}'...`, 0, true);
+		log(`Running '${CMD_2}'...`);
 
 		const result2 = await executeCmd(CMD_2);
 		log(result2, 0, true);
