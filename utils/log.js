@@ -11,6 +11,8 @@ const RESET = '\x1b[0m';
 const IS_DEV = SERVER_ID === 'development';
 
 module.exports = (msg, type = 0, discord = false) => {
+	if (msg.includes('Ignoring local IP address') || msg.includes('Ignoring own IP address')) type = 0;
+
 	const { method, label, color, hex } = LEVELS[type] || LEVELS[0];
 	const output = IS_DEV ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`;
 	console[method](output);
