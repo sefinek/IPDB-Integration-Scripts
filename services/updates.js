@@ -40,4 +40,4 @@ const pullAndRestart = async () => {
 // https://crontab.guru
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
 
-module.exports = pull;
+module.exports = pullAndRestart;
