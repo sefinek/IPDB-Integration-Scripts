@@ -1,7 +1,8 @@
 const axios = require('axios');
 const log = require('../utils/log.js');
 const { version, repoFull } = require('../utils/repo.js');
-const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL } = require('../../config.js').MAIN;
+const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
+const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || '';
 
 module.exports = async (msg, color) => {
 	if (!msg || !DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL) return;
@@ -13,6 +14,7 @@ module.exports = async (msg, color) => {
 		url: DISCORD_WEBHOOKS_URL,
 		headers: { 'Content-Type': 'application/json' },
 		data: {
+			username,
 			embeds: [{
 				description: description
 					.replace(/\p{Emoji_Presentation}/gu, '')
