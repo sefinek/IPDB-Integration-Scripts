@@ -2,7 +2,7 @@ const { SERVER_ID } = require('../../config.js').MAIN;
 const sendWebhook = require('../services/discordWebhooks.js');
 
 const LEVELS = {
-	0: { method: 'info', label: '[i]', color: '\x1b[36m', hex: 0x00CED1 }, // Cyan
+	0: { method: 'log', label: '[i]', color: '\x1b[36m', hex: 0x00CED1 }, // Cyan
 	1: { method: 'log', label: '[✓]', color: '\x1b[32m', hex: 0x59D267 }, // Green
 	2: { method: 'warn', label: '[!]', color: '\x1b[33m', hex: 0xFFD700 }, // Yellow
 	3: { method: 'error', label: '[X]', color: '\x1b[31m', hex: 0xFF0F31 }, // Red
