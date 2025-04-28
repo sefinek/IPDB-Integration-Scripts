@@ -81,7 +81,7 @@ const sendBulkReport = async () => {
 			contentType: 'text/csv',
 		});
 
-		const { data } = await axios.post('https://api.abuseipdb.com/api/v2/bulk-report', form, {
+		const { data } = await axios.post('/bulk-report', form, {
 			headers: {
 				Key: ABUSEIPDB_API_KEY,
 				...form.getHeaders(),
