@@ -25,7 +25,7 @@ const pullAndRestart = async () => {
 
 		const { changes, insertions, deletions } = result;
 		if (changes > 0 || insertions > 0 || deletions > 0) {
-			log(`Updates detected, restarting app... Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
+			log(`Updates detected. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
 			await restartApp();
 		} else {
 			log('No new updates detected', 1);
