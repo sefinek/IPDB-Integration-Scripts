@@ -1,13 +1,13 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
-const { version, repoName, repoURL } = require('../utils/repo.js');
+const { version, name, repoFullUrl } = require('../utils/repo.js');
 const log = require('../utils/log.js');
 
 const api = axios.create({
 	baseURL: 'https://api.abuseipdb.com/api/v2',
 	timeout: 30000,
 	headers: {
-		'User-Agent': `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoURL})`,
+		'User-Agent': `Mozilla/5.0 (compatible; ${name}/${version}; +${repoFullUrl})`,
 		'Accept': 'application/json',
 		'Cache-Control': 'no-cache',
 		'Connection': 'keep-alive',
