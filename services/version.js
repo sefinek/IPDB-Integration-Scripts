@@ -1,8 +1,8 @@
 const axios = require('./axios.js');
-const { version, repoAuthor, repoName } = require('../utils/repo.js');
+const { version, authorAndName } = require('../utils/repo.js');
 const log = require('../utils/log.js');
 
-const packageUrl = `https://raw.githubusercontent.com/${repoAuthor}/${repoName}/main/package.json`;
+const packageUrl = `https://raw.githubusercontent.com/${authorAndName}/main/package.json`;
 
 module.exports = async () => {
 	try {
