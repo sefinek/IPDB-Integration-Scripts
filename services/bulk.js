@@ -22,8 +22,7 @@ const saveBufferToFile = () => {
 
 	const records = [];
 	for (const [ip, entry] of BULK_REPORT_BUFFER.entries()) {
-		const safeComment = entry.comment.substring(0, 930);
-		records.push([ip, entry.categories, new Date(entry.timestamp).toISOString(), safeComment]);
+		records.push([ip, entry.categories, new Date(entry.timestamp).toISOString(), entry.comment]);
 	}
 
 	try {
@@ -59,12 +58,11 @@ const sendBulkReport = async () => {
 
 	const records = [];
 	for (const [ip, entry] of BULK_REPORT_BUFFER.entries()) {
-		const cleanComment = entry.comment.replace(/\n/g, ' ').substring(0, 1024);
 		records.push([
 			ip,
 			entry.categories,
 			new Date(entry.timestamp ?? Date.now()).toISOString(),
-			cleanComment,
+			entry.comment,
 		]);
 	}
 
