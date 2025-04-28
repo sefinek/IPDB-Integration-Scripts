@@ -1,8 +1,10 @@
 const axios = require('axios');
+const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoURL } = require('../utils/repo.js');
-const MAX_RETRIES = 3;
+const log = require('../utils/log.js');
 
 const api = axios.create({
+	baseURL: 'https://api.abuseipdb.com/api/v2',
 	timeout: 30000,
 	headers: {
 		'User-Agent': `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoURL})`,
@@ -12,20 +14,16 @@ const api = axios.create({
 	},
 });
 
-api.interceptors.response.use(null, async err => {
-	const config = err.config;
-	if (!config) return Promise.reject(err);
-
-	config.__retryCount = config.__retryCount || 0;
-	if (config.__retryCount >= MAX_RETRIES || !(err.code === 'ECONNABORTED' || (err.response && err.response.status >= 500))) {
-		return Promise.reject(err);
-	}
-
-	config.__retryCount++;
-	const delay = 25000 * config.__retryCount;
-	await new Promise(res => setTimeout(res, delay));
-
-	return api(config);
+axiosRetry(api, {
+	retries: 3,
+	retryDelay: retryCount => retryCount * 7000,
+	retryCondition: error => {
+		return error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND' || (error.response && error.response.status >= 500);
+	},
+	onRetry: (retryCount, err, requestConfig) => {
+		const status = err.response?.status ? `Status ${err.response.status}` : (err.code || err.message || 'Unknown error');
+		log(`${status} - retry #${retryCount} for ${requestConfig.url}`, 2);
+	},
 });
 
 module.exports = api;
