@@ -18,6 +18,7 @@ module.exports = async (msg, color) => {
 				description: description
 					.replace(/\p{Emoji_Presentation}/gu, '')
 					.replace(/(\b\w+=)/g, '**$1**')
+					.replace(/'/g, '`')
 					.trim(),
 				color: color ?? 0x008FD1,
 				footer: {
