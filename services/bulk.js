@@ -1,7 +1,7 @@
 const FormData = require('form-data');
 const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
-const fs = require('node:fs');
+const fs = require('node:fs/promises');
 const path = require('node:path');
 const axios = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
@@ -12,12 +12,15 @@ const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
 const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
 
-const ensureDirectoryExists = filePath => {
-	const dir = path.dirname(filePath);
-	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+const ensureDirectoryExists = async filePath => {
+	try {
+		await fs.mkdir(path.dirname(filePath), { recursive: true });
+	} catch (err) {
+		if (err.code !== 'EEXIST') throw err;
+	}
 };
 
-const saveBufferToFile = () => {
+const saveBufferToFile = async () => {
 	if (!BULK_REPORT_BUFFER.size) return;
 
 	const records = [];
@@ -27,18 +30,18 @@ const saveBufferToFile = () => {
 
 	try {
 		const output = stringify(records, { header: true, columns: ['IP', 'Categories', 'ReportDate', 'Comment'], quoted: true });
-		ensureDirectoryExists(BUFFER_FILE);
-		fs.writeFileSync(BUFFER_FILE, output);
+		await ensureDirectoryExists(BUFFER_FILE);
+		await fs.writeFile(BUFFER_FILE, output);
 	} catch (err) {
-		log(`Failed to write buffer file: ${err.message}`, 3);
+		log(`❗ Failed to write buffer file: ${err.message}`, 3, true);
 	}
 };
 
-const loadBufferFromFile = () => {
-	if (!fs.existsSync(BUFFER_FILE)) return;
-
+const loadBufferFromFile = async () => {
 	try {
-		const fileContent = fs.readFileSync(BUFFER_FILE, 'utf-8');
+		await fs.access(BUFFER_FILE);
+
+		const fileContent = await fs.readFile(BUFFER_FILE, 'utf-8');
 		const records = parse(fileContent, { columns: false, from_line: 2, skip_empty_lines: true, trim: true });
 
 		for (const record of records) {
@@ -46,10 +49,10 @@ const loadBufferFromFile = () => {
 			if (!ip || !timestamp) continue;
 			BULK_REPORT_BUFFER.set(ip, { categories, timestamp: new Date(timestamp).getTime(), comment });
 		}
+
+		await fs.unlink(BUFFER_FILE);
 	} catch (err) {
-		log(`Failed to parse buffer file: ${err.message}`, 3);
-	} finally {
-		if (fs.existsSync(BUFFER_FILE)) fs.unlinkSync(BUFFER_FILE);
+		if (err.code !== 'ENOENT') log(`Failed to parse/load buffer file: ${err.message}`, 3, true);
 	}
 };
 
@@ -98,12 +101,13 @@ const sendBulkReport = async () => {
 		}
 
 		for (const ip of BULK_REPORT_BUFFER.keys()) markIPAsReported(ip);
-		saveReportedIPs();
+		await saveReportedIPs();
 		BULK_REPORT_BUFFER.clear();
-		if (fs.existsSync(BUFFER_FILE)) fs.unlinkSync(BUFFER_FILE);
+
+		await fs.unlink(BUFFER_FILE).catch(() => {});
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		log(`Failed to send bulk report to AbuseIPDB: ${err.stack}`, 3);
+		log(`Failed to send bulk report to AbuseIPDB: ${err.message}`, 3, true);
 	}
 };
 

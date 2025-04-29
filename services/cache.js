@@ -1,23 +1,26 @@
 const { dirname } = require('node:path');
-const { mkdirSync, existsSync, readFileSync, writeFileSync } = require('node:fs');
+const fs = require('node:fs/promises');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
 const log = require('../log.js');
 
 const reportedIPs = new Map();
 
-const ensureCacheDir = () => {
+const ensureCacheDir = async () => {
 	const dir = dirname(CACHE_FILE);
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
+	try {
+		await fs.mkdir(dir, { recursive: true });
 		log(`Created missing directory for cache: ${dir}`, 1);
+	} catch (err) {
+		log(`❗ Failed to create cache directory: ${err.message}`, 3);
 	}
 };
 
-const loadReportedIPs = () => {
-	ensureCacheDir();
+const loadReportedIPs = async () => {
+	await ensureCacheDir();
 
-	if (existsSync(CACHE_FILE)) {
-		readFileSync(CACHE_FILE, 'utf8')
+	try {
+		const fileContent = await fs.readFile(CACHE_FILE, 'utf8');
+		fileContent
 			.split('\n')
 			.filter(Boolean)
 			.forEach(line => {
@@ -26,14 +29,26 @@ const loadReportedIPs = () => {
 			});
 
 		log(`Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`, 1);
-	} else {
-		log(`${CACHE_FILE} does not exist. No data to load.`);
+	} catch (err) {
+		if (err.code === 'ENOENT') {
+			log(`${CACHE_FILE} does not exist. No data to load.`);
+		} else {
+			log(`❗ Failed to load cache file: ${err.message}`, 3);
+		}
 	}
 };
 
-const saveReportedIPs = () => {
-	ensureCacheDir();
-	writeFileSync(CACHE_FILE, Array.from(reportedIPs).map(([ip, time]) => `${ip} ${time}`).join('\n'), 'utf8');
+const saveReportedIPs = async () => {
+	await ensureCacheDir();
+
+	try {
+		const data = Array.from(reportedIPs)
+			.map(([ip, time]) => `${ip} ${time}`)
+			.join('\n');
+		await fs.writeFile(CACHE_FILE, data, 'utf8');
+	} catch (err) {
+		log(`❗ Failed to save cache file: ${err.message}`, 3);
+	}
 };
 
 const isIPReportedRecently = ip => {
@@ -43,4 +58,10 @@ const isIPReportedRecently = ip => {
 
 const markIPAsReported = ip => reportedIPs.set(ip, Math.floor(Date.now() / 1000));
 
-module.exports = { reportedIPs, loadReportedIPs, saveReportedIPs, isIPReportedRecently, markIPAsReported };
+module.exports = {
+	reportedIPs,
+	loadReportedIPs,
+	saveReportedIPs,
+	isIPReportedRecently,
+	markIPAsReported,
+};
