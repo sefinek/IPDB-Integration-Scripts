@@ -8,10 +8,14 @@ const reportedIPs = new Map();
 const ensureCacheDir = async () => {
 	const dir = dirname(CACHE_FILE);
 	try {
-		await fs.mkdir(dir, { recursive: true });
-		log(`Created missing directory for cache: ${dir}`, 1);
+		await fs.access(dir);
 	} catch (err) {
-		log(`❗ Failed to create cache directory: ${err.message}`, 3);
+		if (err.code === 'ENOENT') {
+			await fs.mkdir(dir, { recursive: true });
+			log(`Created cache directory: ${dir}`, 1);
+		} else {
+			log(`Failed to access cache directory: ${err.message}`, 3);
+		}
 	}
 };
 
