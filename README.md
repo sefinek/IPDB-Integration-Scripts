@@ -9,7 +9,7 @@
 | `timestamp` | Event timestamp (UTC format)                         |
 | `srcIp`     | Source IP address (attacker)                         |
 | `dstIp`     | Destination IP address (victim/server)               |
-| `proto`     | Protocol used (e.g., TCP, SSH, MONGOD)               |
+| `proto`     | Protocol used (e.g., TCP, SSH, TELNET, MONGOD)       |
 | `spt`       | Source port number                                   |
 | `dpt`       | Destination port number                              |
 | `in`        | Incoming network interface name (e.g., enp1s0, ens3) |
