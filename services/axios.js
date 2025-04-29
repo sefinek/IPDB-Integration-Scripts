@@ -4,8 +4,9 @@ const { version, name, repoFullUrl } = require('../repo.js');
 const log = require('../log.js');
 
 const baseURLs = {
-	'spamverify': 'https://api.spamverify.com/v1/ip',
+	'netcatdb': 'https://api.netcatdb.com/api/v1',
 	'abuseipdb': 'https://api.abuseipdb.com/api/v2',
+	'spamverify': 'https://api.spamverify.com/v1/ip',
 };
 
 const lowerName = name.toLowerCase();
