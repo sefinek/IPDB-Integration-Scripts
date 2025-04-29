@@ -2,8 +2,8 @@ const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
 const { get } = require('./axios.js');
-const isLocalIP = require('../utils/isLocalIP.js');
-const log = require('../utils/log.js');
+const isLocalIP = require('../isLocalIP.js');
+const log = require('../log.js');
 const { IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
 
 const ipAddresses = new Set();

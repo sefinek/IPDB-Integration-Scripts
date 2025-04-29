@@ -1,5 +1,5 @@
-const { SERVER_ID } = require('../../config.js').MAIN;
-const sendWebhook = require('../services/discordWebhooks.js');
+const { SERVER_ID } = require('../config.js').MAIN;
+const sendWebhook = require('./services/discordWebhooks.js');
 
 const LEVELS = {
 	0: { method: 'log', label: '[i]', color: '\x1b[36m', hex: 0x00CED1 }, // Cyan

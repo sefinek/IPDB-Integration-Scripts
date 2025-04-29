@@ -1,6 +1,6 @@
 const { exec } = require('node:child_process');
 const ecosystem = require('../../ecosystem.config.js');
-const log = require('../utils/log.js');
+const log = require('../log.js');
 
 const executeCmd = cmd => new Promise((resolve, reject) => {
 	exec(cmd, (err, stdout, stderr) => {

@@ -1,6 +1,6 @@
 const axios = require('./axios.js');
-const { version, authorAndName } = require('../utils/repo.js');
-const log = require('../utils/log.js');
+const { version, authorAndName } = require('../repo.js');
+const log = require('../log.js');
 
 const packageUrl = `https://raw.githubusercontent.com/${authorAndName}/main/package.json`;
 

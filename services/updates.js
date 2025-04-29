@@ -1,7 +1,7 @@
 const simpleGit = require('simple-git');
 const { CronJob } = require('cron');
 const restartApp = require('./reloadApp.js');
-const log = require('../utils/log.js');
+const log = require('../log.js');
 const { AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
 const git = simpleGit();

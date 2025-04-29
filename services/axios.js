@@ -1,7 +1,7 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
-const { version, name, repoFullUrl } = require('../utils/repo.js');
-const log = require('../utils/log.js');
+const { version, name, repoFullUrl } = require('../repo.js');
+const log = require('../log.js');
 
 const api = axios.create({
 	baseURL: 'https://api.abuseipdb.com/api/v2',
