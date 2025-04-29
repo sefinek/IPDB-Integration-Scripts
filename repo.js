@@ -1,4 +1,4 @@
-const { version, homepage, author: authorEmailWebsite } = require('../../package.json');
+const { version, homepage, author: authorEmailWebsite } = require('../package.json');
 
 const match = homepage.match(/github\.com\/([^\\/]+)\/([^#\\/]+)/) || [];
 const [, author, name] = match;

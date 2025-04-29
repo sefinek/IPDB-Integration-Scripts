@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const axios = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
-const log = require('../utils/log.js');
+const log = require('../log.js');
 const { ABUSEIPDB_API_KEY } = require('../../config.js').MAIN;
 
 const BULK_REPORT_BUFFER = new Map();
