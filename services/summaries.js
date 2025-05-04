@@ -53,12 +53,14 @@ const summaryEmbed = async () => {
 			.filter(([, count]) => count === maxReports && count > 1)
 			.map(([hour]) => parseInt(hour));
 
-		const summaryString = Object.entries(hourlySummary)
+		const summaryStr = Object.entries(hourlySummary)
 			.map(([hour, count]) => `${formatHourRange(parseInt(hour))}: ${count} ${pluralizeReport(count)}${topHours.includes(parseInt(hour)) ? ' 🔥' : ''}`)
 			.join('\n');
 
-		await sendWebhook(7, `Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryString}\`\`\``);
-		log(`Reported IPs yesterday by hour:\n${summaryString}\nTotal reported IPs: ${totalReports} ${pluralizeReport(totalReports)}`, 1);
+		await sendWebhook(
+			`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryStr}\`\`\``,
+			0x00FF39);
+		log(`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\n${summaryStr}`, 1);
 	} catch (err) {
 		log(err, 3);
 	}
