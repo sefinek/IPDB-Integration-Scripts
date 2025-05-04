@@ -3,7 +3,7 @@ const { version, authorAndName } = require('../repo.js');
 const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
 const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || null;
 
-module.exports = async (msg, color) => {
+module.exports = async (msg, hex) => {
 	if (!msg || !DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL) return;
 
 	const description = msg instanceof Error ? msg.stack : msg;
@@ -20,7 +20,7 @@ module.exports = async (msg, color) => {
 					.replace(/(\b\w+=)/g, '**$1**')
 					.replace(/'/g, '`')
 					.trim(),
-				color: color ?? 0x008FD1,
+				color: hex ?? 0x008FD1,
 				footer: {
 					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${authorAndName} [v${version}]`,
 				},
