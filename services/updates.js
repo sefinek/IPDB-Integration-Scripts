@@ -8,7 +8,7 @@ const git = simpleGit();
 
 const pull = async () => {
 	try {
-		log('Resetting local repository to HEAD (--hard)', 0, EXTENDED_LOGS);
+		log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
 		await git.reset(['--hard']);
 
 		log('Pulling the repository and the required submodule...');
@@ -39,5 +39,3 @@ const pullAndRestart = async () => {
 
 // https://crontab.guru
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
-
-module.exports = pullAndRestart;
