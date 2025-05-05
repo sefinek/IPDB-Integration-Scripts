@@ -104,7 +104,7 @@ const sendBulkReport = async () => {
 		await saveReportedIPs();
 		BULK_REPORT_BUFFER.clear();
 
-		await fs.unlink(BUFFER_FILE).catch(() => {});
+		await fs.unlink(BUFFER_FILE);
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
 		log(err, 3, true);
