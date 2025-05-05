@@ -107,7 +107,7 @@ const sendBulkReport = async () => {
 		await fs.unlink(BUFFER_FILE).catch(() => {});
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		log(`Failed to send bulk report to AbuseIPDB: ${err.message}`, 3, true);
+		log(err, 3, true);
 	}
 };
 
