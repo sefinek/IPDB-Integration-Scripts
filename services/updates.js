@@ -7,11 +7,21 @@ const { AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 const git = simpleGit();
 
 const pull = async () => {
-	log('Pulling repository and submodules...', 0, EXTENDED_LOGS);
-
 	try {
+		log('Resetting local repository to HEAD (--hard)', 0, EXTENDED_LOGS);
+		await git.reset(['--hard']);
+
+		log('Pulling the repository and the required submodule...', 0, EXTENDED_LOGS);
 		const { summary } = await git.pull(['--recurse-submodules']);
-		return summary;
+
+		const { changes, insertions, deletions } = summary;
+		if (changes > 0 || insertions > 0 || deletions > 0) {
+			log(`Updates detected. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
+			return true;
+		} else {
+			log('No new updates detected', 1);
+			return false;
+		}
 	} catch (err) {
 		log(err, 3);
 		return null;
@@ -20,16 +30,8 @@ const pull = async () => {
 
 const pullAndRestart = async () => {
 	try {
-		const result = await pull();
-		if (!result) return;
-
-		const { changes, insertions, deletions } = result;
-		if (changes > 0 || insertions > 0 || deletions > 0) {
-			log(`Updates detected. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
-			await restartApp();
-		} else {
-			log('No new updates detected', 1);
-		}
+		const updatesAvailable = await pull();
+		if (updatesAvailable) await restartApp();
 	} catch (err) {
 		log(err, 3);
 	}

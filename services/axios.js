@@ -4,19 +4,18 @@ const { version, name, repoFullUrl } = require('../repo.js');
 const log = require('../log.js');
 
 const baseURLs = {
-	'netcatdb': 'https://api.netcatdb.com/api/v1',
+	'netcatdb': 'https://api.netcatdb.com/api/v1', // TODO
 	'abuseipdb': 'https://api.abuseipdb.com/api/v2',
 	'spamverify': 'https://api.spamverify.com/v1/ip',
 };
 
-const lowerName = name.toLowerCase();
-const matchedKey = Object.keys(baseURLs).find(key => lowerName.includes(key));
+const matchedKey = Object.keys(baseURLs).find(key => name.toLowerCase().includes(key));
 const baseURL = baseURLs[matchedKey];
 if (!baseURL) {
 	log(`No matching baseURL found for name '${name}', expected one of: ${Object.keys(baseURLs).join(', ')}`, 3, true);
 	process.exit(1);
 } else {
-	log(`Base URL matched for '${matchedKey}': ${baseURL}`, 1);
+	log(`Base URL matched for '${matchedKey}', using: ${baseURL}`, 1);
 }
 
 const api = axios.create({
