@@ -11,7 +11,7 @@ const pull = async () => {
 		log('Resetting local repository to HEAD (--hard)', 0, EXTENDED_LOGS);
 		await git.reset(['--hard']);
 
-		log('Pulling the repository and the required submodule...', 0, EXTENDED_LOGS);
+		log('Pulling the repository and the required submodule...');
 		const { summary } = await git.pull(['--recurse-submodules']);
 
 		const { changes, insertions, deletions } = summary;
