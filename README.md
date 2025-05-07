@@ -1,7 +1,18 @@
 # Integration Scripts
+
+## Supported Services
+- [SniffCat]() (soon)
 - [AbuseIPDB](https://www.abuseipdb.com/user/158699)
 - [SpamVerify](https://spamverify.com/user/108395000)
-- [SniffCat]() (soon)
+
+## Used for
+| Integration | [SniffCat]()                                     | [AbuseIPDB](https://www.abuseipdb.com/user/158699) | [SpamVerify](https://spamverify.com/user/108395000)    |
+|-------------|--------------------------------------------------|----------------------------------------------------|:-------------------------------------------------------|
+| UFW         | https://github.com/sefinek/UFW-SniffCat-Reporter | https://github.com/sefinek/UFW-AbuseIPDB-Reporter  | https://github.com/sefinek/UFW-SpamVerify-Reporter     |
+| Cloudflare  |                                                  |                                                    | https://github.com/sefinek/Cloudflare-WAF-To-AbuseIPDB |
+| T-Pot       | https://github.com/sefinek/T-Pot-To-SniffCat     | https://github.com/sefinek/T-Pot-To-AbuseIPDB      |                                                        |
+| Suricata    |                                                  | https://github.com/sefinek/Suricata-To-AbuseIPDB   |                                                        |
+
 
 ## Terms
 | Key         | Description                                          |
