@@ -4,7 +4,7 @@ const log = require('../log.js');
 
 const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${authorAndName}/main/package.json`;
 
-module.exports = async () => {
+(async () => {
 	log('Checking for new versions...');
 
 	try {
@@ -15,4 +15,4 @@ module.exports = async () => {
 	} catch (err) {
 		log(`Failed to check version: ${err.stack}`, 3, true);
 	}
-};
+})();
