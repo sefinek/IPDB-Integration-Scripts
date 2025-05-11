@@ -23,7 +23,7 @@ const pull = async () => {
 			return false;
 		}
 	} catch (err) {
-		log(err, 3);
+		log(err.stack, 3);
 		return null;
 	}
 };
@@ -33,7 +33,7 @@ const pullAndRestart = async () => {
 		const updatesAvailable = await pull();
 		if (updatesAvailable) await restartApp();
 	} catch (err) {
-		log(err, 3);
+		log(err.stack, 3);
 	}
 };
 

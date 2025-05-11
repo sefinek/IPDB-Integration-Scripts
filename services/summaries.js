@@ -62,7 +62,7 @@ const summaryEmbed = async () => {
 			0x00FF39);
 		log(`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\n${summaryStr}`, 1);
 	} catch (err) {
-		log(err, 3);
+		log(err.stack, 3);
 	}
 };
 
