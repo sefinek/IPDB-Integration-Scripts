@@ -6,8 +6,6 @@ const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_
 module.exports = async (msg, hex) => {
 	if (!msg || !DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL) return;
 
-	const description = msg instanceof Error ? msg.stack : msg;
-
 	const config = {
 		method: 'POST',
 		url: DISCORD_WEBHOOKS_URL,
@@ -15,7 +13,7 @@ module.exports = async (msg, hex) => {
 		data: {
 			username,
 			embeds: [{
-				description: description
+				description: msg
 					.replace(/\p{Emoji_Presentation}/gu, '')
 					.replace(/(\b\w+=)/g, '**$1**')
 					.replace(/'/g, '`')
