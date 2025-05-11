@@ -107,7 +107,7 @@ const sendBulkReport = async () => {
 		await fs.unlink(BUFFER_FILE);
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		log(err, 3, true);
+		log(err.stack, 3, true);
 	}
 };
 

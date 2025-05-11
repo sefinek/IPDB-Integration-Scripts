@@ -32,6 +32,6 @@ module.exports = async () => {
 		const result2 = await executeCmd(CMD_2);
 		log(result2, 0, true);
 	} catch (err) {
-		log(err, 3);
+		log(err.stack, 3);
 	}
 };
