@@ -7,6 +7,7 @@ const reportedIPs = new Map();
 
 const ensureCacheDir = async () => {
 	const dir = dirname(CACHE_FILE);
+
 	try {
 		await fs.access(dir);
 	} catch (err) {
@@ -14,12 +15,13 @@ const ensureCacheDir = async () => {
 			await fs.mkdir(dir, { recursive: true });
 			log(`Created cache directory: ${dir}`, 1);
 		} else {
-			log(`Failed to access cache directory: ${err.message}`, 3);
+			log(`Failed to access cache directory: ${err.stack}`, 3);
 		}
 	}
 };
 
 const loadReportedIPs = async () => {
+	if (!CACHE_FILE) return;
 	await ensureCacheDir();
 
 	try {
@@ -37,12 +39,13 @@ const loadReportedIPs = async () => {
 		if (err.code === 'ENOENT') {
 			log(`${CACHE_FILE} does not exist. No data to load.`);
 		} else {
-			log(`❗ Failed to load cache file: ${err.message}`, 3);
+			log(`Failed to load cache file: ${err.stack}`, 3);
 		}
 	}
 };
 
 const saveReportedIPs = async () => {
+	if (!CACHE_FILE) return;
 	await ensureCacheDir();
 
 	try {
@@ -51,7 +54,7 @@ const saveReportedIPs = async () => {
 			.join('\n');
 		await fs.writeFile(CACHE_FILE, data, 'utf8');
 	} catch (err) {
-		log(`❗ Failed to save cache file: ${err.message}`, 3);
+		log(`Failed to save cache file: ${err.stack}`, 3);
 	}
 };
 
