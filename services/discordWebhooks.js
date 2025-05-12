@@ -21,8 +21,6 @@ module.exports = async (msg, hex) => {
 				},
 				timestamp: new Date().toISOString(),
 			}],
-		}, {
-			headers: { 'Content-Type': 'application/json' },
 		});
 
 		if (res.status !== 204) console.warn(`[X] Failed to deliver Discord Webhook (unexpected status code: ${res.status})`);
