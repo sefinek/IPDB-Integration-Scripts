@@ -1,10 +1,18 @@
 const simpleGit = require('simple-git');
+const semver = require('semver');
 const { CronJob } = require('cron');
+const path = require('node:path');
 const restartApp = require('./reloadApp.js');
 const log = require('../log.js');
 const { AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
 const git = simpleGit();
+const pkgPath = path.resolve(__dirname, '../../package.json');
+
+const getLocalVersion = () => {
+	delete require.cache[require.resolve(pkgPath)];
+	return require(pkgPath).version;
+};
 
 const pull = async () => {
 	try {
@@ -16,12 +24,12 @@ const pull = async () => {
 
 		const { changes, insertions, deletions } = summary;
 		if (changes > 0 || insertions > 0 || deletions > 0) {
-			log(`Updates detected. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
+			log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
 			return true;
-		} else {
-			log('No new updates detected', 1);
-			return false;
 		}
+
+		log('No new updates detected', 1);
+		return false;
 	} catch (err) {
 		log(err.stack, 3);
 		return null;
@@ -30,7 +38,16 @@ const pull = async () => {
 
 const pullAndRestart = async () => {
 	try {
+		const oldVersion = getLocalVersion();
 		const updatesAvailable = await pull();
+		const newVersion = getLocalVersion();
+
+		if (semver.neq(newVersion, oldVersion)) {
+			log(`Version changed: ${oldVersion} → ${newVersion}`, 1, true);
+			await restartApp();
+			return;
+		}
+
 		if (updatesAvailable) await restartApp();
 	} catch (err) {
 		log(err.stack, 3);
