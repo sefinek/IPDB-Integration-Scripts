@@ -24,7 +24,7 @@ if (!resolvedBaseURL) {
 }
 
 const api = axios.create({ baseURL: resolvedBaseURL, timeout: 50000, headers: COMMON_HEADERS });
-const webhooks = axios.create({ timeout: 20000, headers: COMMON_HEADERS });
+const webhook = axios.create({ timeout: 20000, headers: COMMON_HEADERS });
 
 const retryOptions = {
 	retries: 3,
@@ -37,6 +37,6 @@ const retryOptions = {
 };
 
 axiosRetry(api, retryOptions);
-axiosRetry(webhooks, retryOptions);
+axiosRetry(webhook, retryOptions);
 
-module.exports = { axios: api, webhooks };
+module.exports = { axios: api, webhook };
