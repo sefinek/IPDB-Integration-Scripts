@@ -3,9 +3,9 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const axios = require('../services/axios.js');
+const { axios } = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
-const log = require('../log.js');
+const logger = require('../logger.js');
 const { ABUSEIPDB_API_KEY } = require('../../config.js').MAIN;
 
 const BULK_REPORT_BUFFER = new Map();
@@ -33,7 +33,7 @@ const saveBufferToFile = async () => {
 		await ensureDirectoryExists(BUFFER_FILE);
 		await fs.writeFile(BUFFER_FILE, output);
 	} catch (err) {
-		log(`❗ Failed to write buffer file: ${err.message}`, 3, true);
+		logger.log(`❗ Failed to write buffer file: ${err.message}`, 3, true);
 	}
 };
 
@@ -52,7 +52,7 @@ const loadBufferFromFile = async () => {
 
 		await fs.unlink(BUFFER_FILE);
 	} catch (err) {
-		if (err.code !== 'ENOENT') log(`Failed to parse/load buffer file: ${err.message}`, 3, true);
+		if (err.code !== 'ENOENT') logger.log(`Failed to parse/load buffer file: ${err.message}`, 3, true);
 	}
 };
 
@@ -92,11 +92,11 @@ const sendBulkReport = async () => {
 		const saved = data?.data?.savedReports ?? 0;
 		const failed = data?.data?.invalidReports?.length ?? 0;
 
-		log(`Sent bulk report (${BULK_REPORT_BUFFER.size} IPs): ${saved} accepted, ${failed} rejected`, 1);
+		logger.log(`Sent bulk report (${BULK_REPORT_BUFFER.size} IPs): ${saved} accepted, ${failed} rejected`, 1);
 
 		if (failed > 0) {
 			data.data.invalidReports.forEach(fail => {
-				log(`Rejected in bulk report [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`, 2);
+				logger.log(`Rejected in bulk report [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`, 2);
 			});
 		}
 
@@ -107,7 +107,7 @@ const sendBulkReport = async () => {
 		await fs.unlink(BUFFER_FILE);
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		log(err.stack, 3, true);
+		logger.log(err.stack, 3, true);
 	}
 };
 

@@ -3,7 +3,7 @@ const semver = require('semver');
 const { CronJob } = require('cron');
 const path = require('node:path');
 const restartApp = require('./reloadApp.js');
-const log = require('../log.js');
+const logger = require('../logger.js');
 const { AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
 const git = simpleGit();
@@ -16,22 +16,22 @@ const getLocalVersion = () => {
 
 const pull = async () => {
 	try {
-		log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
+		logger.log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
 		await git.reset(['--hard']);
 
-		log('Pulling the repository and the required submodule...');
+		logger.log('Pulling the repository and the required submodule...');
 		const { summary } = await git.pull(['--recurse-submodules']);
 
 		const { changes, insertions, deletions } = summary;
 		if (changes > 0 || insertions > 0 || deletions > 0) {
-			log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
+			logger.log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
 			return true;
 		}
 
-		log('No new updates detected', 1);
+		logger.log('No new updates detected', 1);
 		return false;
 	} catch (err) {
-		log(err.stack, 3);
+		logger.log(err.stack, 3);
 		return null;
 	}
 };
@@ -43,14 +43,14 @@ const pullAndRestart = async () => {
 		const newVersion = getLocalVersion();
 
 		if (semver.neq(newVersion, oldVersion)) {
-			log(`Version changed: ${oldVersion} → ${newVersion}`, 1, true);
+			logger.log(`Version changed: ${oldVersion} → ${newVersion}`, 1, true);
 			await restartApp();
 			return;
 		}
 
 		if (updatesAvailable) await restartApp();
 	} catch (err) {
-		log(err.stack, 3);
+		logger.log(err.stack, 3);
 	}
 };
 

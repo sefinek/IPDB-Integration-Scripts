@@ -1,7 +1,7 @@
 const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
-const log = require('../log.js');
+const logger = require('../logger.js');
 
 const reportedIPs = new Map();
 
@@ -13,9 +13,9 @@ const ensureCacheDir = async () => {
 	} catch (err) {
 		if (err.code === 'ENOENT') {
 			await fs.mkdir(dir, { recursive: true });
-			log(`Created cache directory: ${dir}`, 1);
+			logger.log(`Created cache directory: ${dir}`, 1);
 		} else {
-			log(`Failed to access cache directory: ${err.stack}`, 3);
+			logger.log(`Failed to access cache directory: ${err.stack}`, 3);
 		}
 	}
 };
@@ -34,12 +34,12 @@ const loadReportedIPs = async () => {
 				if (ip && !isNaN(time)) reportedIPs.set(ip, Number(time));
 			});
 
-		log(`Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`, 1);
+		logger.log(`Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`, 1);
 	} catch (err) {
 		if (err.code === 'ENOENT') {
-			log(`${CACHE_FILE} does not exist. No data to load.`);
+			logger.log(`${CACHE_FILE} does not exist. No data to load.`);
 		} else {
-			log(`Failed to load cache file: ${err.stack}`, 3);
+			logger.log(`Failed to load cache file: ${err.stack}`, 3);
 		}
 	}
 };
@@ -54,7 +54,7 @@ const saveReportedIPs = async () => {
 			.join('\n');
 		await fs.writeFile(CACHE_FILE, data, 'utf8');
 	} catch (err) {
-		log(`Failed to save cache file: ${err.stack}`, 3);
+		logger.log(`Failed to save cache file: ${err.stack}`, 3);
 	}
 };
 

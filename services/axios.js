@@ -1,7 +1,7 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, name, repoFullUrl } = require('../repo.js');
-const log = require('../log.js');
+const logger = require('../logger.js');
 
 const baseURLs = {
 	'netcatdb': 'https://api.netcatdb.com/api/v1', // TODO
@@ -12,13 +12,13 @@ const baseURLs = {
 const matchedKey = Object.keys(baseURLs).find(key => name.toLowerCase().includes(key));
 const baseURL = baseURLs[matchedKey];
 if (!baseURL) {
-	log(`No matching baseURL found for name '${name}', expected one of: ${Object.keys(baseURLs).join(', ')}`, 3, true);
+	logger.log(`No matching baseURL found for name '${name}', expected one of: ${Object.keys(baseURLs).join(', ')}`, 3, true);
 	process.exit(1);
 }
 
 const api = axios.create({
 	baseURL,
-	timeout: 30000,
+	timeout: 50000,
 	headers: {
 		'User-Agent': `Mozilla/5.0 (compatible; ${name}/${version}; +${repoFullUrl})`,
 		'Accept': 'application/json',
@@ -27,7 +27,17 @@ const api = axios.create({
 	},
 });
 
-axiosRetry(api, {
+const webhooks = axios.create({
+	timeout: 20000,
+	headers: {
+		'User-Agent': `Mozilla/5.0 (compatible; ${name}/${version}; +${repoFullUrl})`,
+		'Accept': 'application/json',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive',
+	},
+});
+
+const retry = {
 	retries: 3,
 	retryDelay: retryCount => retryCount * 7000,
 	retryCondition: error => {
@@ -35,8 +45,11 @@ axiosRetry(api, {
 	},
 	onRetry: (retryCount, err, requestConfig) => {
 		const status = err.response?.status ? `Status ${err.response.status}` : (err.code || err.message || 'Unknown error');
-		log(`${status} - retry #${retryCount} for ${requestConfig.url}`, 2);
+		logger.log(`${status} - retry #${retryCount} for ${requestConfig.url}`, 2);
 	},
-});
+};
 
-module.exports = api;
+axiosRetry(api, retry);
+axiosRetry(webhooks, retry);
+
+module.exports = { axios: api, webhooks };

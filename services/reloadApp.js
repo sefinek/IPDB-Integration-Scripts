@@ -1,14 +1,14 @@
 const { exec } = require('node:child_process');
 const ecosystem = require('../../ecosystem.config.js');
-const log = require('../log.js');
+const logger = require('../logger.js');
 
 const executeCmd = cmd => new Promise((resolve, reject) => {
 	exec(cmd, (err, stdout, stderr) => {
 		if (err) {
-			log(`Error executing command: ${cmd}\n${err}`, 3);
+			logger.log(`Error executing command: ${cmd}\n${err}`, 3);
 			return reject(err);
 		}
-		if (stderr) log(`Warning while executing: ${cmd}\n${stderr}`, 2);
+		if (stderr) logger.log(`Warning while executing: ${cmd}\n${stderr}`, 2);
 
 		resolve(stdout.trim());
 	});
@@ -23,15 +23,15 @@ const CMD_2 = (() => {
 module.exports = async () => {
 	try {
 		// 1 - npm dependencies
-		log(`Running npm '${CMD_1}'...`);
+		logger.log(`Running npm '${CMD_1}'...`);
 		const result1 = await executeCmd(CMD_1);
-		log(result1, 0, true);
+		logger.log(result1, 0, true);
 
 		// 2 - restart
-		log(`Running '${CMD_2}'...`);
+		logger.log(`Running '${CMD_2}'...`);
 		const result2 = await executeCmd(CMD_2);
-		log(result2, 0, true);
+		logger.log(result2, 0, true);
 	} catch (err) {
-		log(err.stack, 3);
+		logger.log(err.stack, 3);
 	}
 };

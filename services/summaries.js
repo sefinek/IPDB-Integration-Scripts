@@ -1,7 +1,6 @@
 const { CronJob } = require('cron');
 const fs = require('node:fs/promises');
-const sendWebhook = require('./discordWebhooks.js');
-const log = require('../log.js');
+const logger = require('../logger.js');
 const { CACHE_FILE } = require('../../config.js').MAIN;
 
 const formatHourRange = hour => `${hour.toString().padStart(2, '0')}:00-${hour.toString().padStart(2, '0')}:59`;
@@ -11,17 +10,17 @@ const summaryEmbed = async () => {
 	try {
 		await fs.access(CACHE_FILE);
 	} catch {
-		return log(`Cache file not found: ${CACHE_FILE}`, 3);
+		return logger.log(`Cache file not found: ${CACHE_FILE}`, 3);
 	}
 
 	let data;
 	try {
 		data = (await fs.readFile(CACHE_FILE, 'utf8')).trim();
 	} catch (err) {
-		return log(`Error reading file: ${err.message}`, 3);
+		return logger.log(`Error reading file: ${err.message}`, 3);
 	}
 
-	if (!data) log(`Cache file is empty: ${CACHE_FILE}`);
+	if (!data) logger.log(`Cache file is empty: ${CACHE_FILE}`);
 
 	try {
 		const yesterday = new Date();
@@ -57,12 +56,12 @@ const summaryEmbed = async () => {
 			.map(([hour, count]) => `${formatHourRange(parseInt(hour))}: ${count} ${pluralizeReport(count)}${topHours.includes(parseInt(hour)) ? ' 🔥' : ''}`)
 			.join('\n');
 
-		await sendWebhook(
+		await logger.webhook(
 			`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\nGood night to you, sleep well! 😴\n\`\`\`${summaryStr}\`\`\``,
 			0x00FF39);
-		log(`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\n${summaryStr}`, 1);
+		logger.log(`Midnight. Summary of IP address reports (${totalReports}) from yesterday (${yesterdayString}).\n${summaryStr}`, 1);
 	} catch (err) {
-		log(err.stack, 3);
+		logger.log(err.stack, 3);
 	}
 };
 
