@@ -14,8 +14,6 @@ const baseURL = baseURLs[matchedKey];
 if (!baseURL) {
 	log(`No matching baseURL found for name '${name}', expected one of: ${Object.keys(baseURLs).join(', ')}`, 3, true);
 	process.exit(1);
-} else {
-	log(`Base URL matched for '${matchedKey}', using: ${baseURL}`, 1);
 }
 
 const api = axios.create({

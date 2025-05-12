@@ -10,7 +10,7 @@ const ipAddresses = new Set();
 let ipv6ErrorCount = 0, ipv6ErrorLogged = false;
 
 const fetchIPAddress = async family => {
-	if (family === 6 && (ipv6ErrorLogged || !IPv6_SUPPORT)) return;
+	if (family === 6 && (!IPv6_SUPPORT || ipv6ErrorLogged)) return;
 
 	try {
 		const { data } = await get('https://api.sefinek.net/api/v2/ip', {
@@ -20,22 +20,22 @@ const fetchIPAddress = async family => {
 		if (data?.success && data?.message) {
 			ipAddresses.add(data.message);
 
-			if (family === 6) {
-				if (ipv6ErrorCount > 0) log(`Uh, it looks like IPv6 has started working! It only succeeded after ${ipv6ErrorCount} attempts.`, 1);
+			if (family === 6 && ipv6ErrorCount > 0) {
+				log(`IPv6 is now working. It succeeded after ${ipv6ErrorCount} failed attempts.`, 1);
 				ipv6ErrorCount = 0;
 			}
 		} else {
-			log(`Unexpected API response: ${JSON.stringify(data)}`, 2);
+			log(`Unexpected API response: success=${data?.success}, message=${data?.message}`, 2);
 		}
 	} catch (err) {
-		log(`Error fetching IPv${family} address: ${err.message}`, 3);
+		log(`Failed to fetch IPv${family} address: ${err.message}`, 3);
 
-		if (family === 6 && err.code === 'ENOENT') {
+		if (family === 6) {
 			ipv6ErrorCount++;
 
 			if (ipv6ErrorCount >= 6 && !ipv6ErrorLogged) {
 				ipv6ErrorLogged = true;
-				log('It looks like your ISP hasn\'t assigned you any IPv6 address. I won\'t attempt to fetch it again.', 2);
+				log('IPv6 address could not be retrieved after multiple attempts. Disabling further checks.', 2);
 			} else {
 				await new Promise(resolve => setTimeout(resolve, 4000));
 				await fetchIPAddress(6);
@@ -46,9 +46,8 @@ const fetchIPAddress = async family => {
 
 const fetchLocalIPs = () => {
 	for (const iface of Object.values(networkInterfaces()).flat()) {
-		if (iface && !iface.internal && iface.address && !isLocalIP(iface.address)) {
-			ipAddresses.add(iface.address);
-		}
+		const addr = iface?.address;
+		if (addr && !iface.internal && !isLocalIP(addr)) ipAddresses.add(addr);
 	}
 };
 
