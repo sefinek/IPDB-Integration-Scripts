@@ -11,7 +11,6 @@ module.exports = async (msg, hex) => {
 			username,
 			embeds: [{
 				description: msg
-					.replace(/\p{Emoji_Presentation}/gu, '')
 					.replace(/(\b\w+=)/g, '**$1**')
 					.replace(/'/g, '`')
 					.trim(),
