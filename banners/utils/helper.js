@@ -14,4 +14,5 @@ module.exports = {
 	reset,
 	headerText,
 	authorText,
+	support: 'If you like it, consider supporting me — I\'d really appreciate it! https://sefinek.net/donate',
 };
