@@ -1,4 +1,4 @@
-const { SERVER_ID } = require('../config.js').MAIN;
+const { reset, IS_PM2 } = require('./banners/utils/helper.js');
 
 const LEVELS = {
 	0: { method: 'log', label: '[i]', color: '\x1b[38;5;38m', hex: 0x00AEEF },
@@ -7,13 +7,10 @@ const LEVELS = {
 	3: { method: 'error', label: '[X]', color: '\x1b[38;5;160m', hex: 0xD32F2F },
 };
 
-const RESET = '\x1b[0m';
-const isDev = SERVER_ID === 'development';
-
 class Logger {
 	static print(msg, level) {
-		const { method, label, color } = LEVELS[level] || LEVELS[0];
-		console[method](isDev ? `${color}${label} ${msg}${RESET}` : `${label} ${msg}`);
+		const { method, label, color: lvlColor } = LEVELS[level] || LEVELS[0];
+		console[method](IS_PM2 ? `${label} ${msg}` : `${lvlColor}${label} ${msg}${reset}`);
 	}
 
 	static async webhook(msg, level) {
