@@ -4,7 +4,7 @@ const { stringify } = require('csv-stringify/sync');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { bulk } = require('../services/axios.js');
-const { ABUSEIPDB } = require('../../services/headers.js');
+const { ABUSEIPDB } = require('../headers.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const logger = require('../logger.js');
 
