@@ -38,6 +38,8 @@ const saveBufferToFile = async () => {
 };
 
 const loadBufferFromFile = async () => {
+	logger.log(`Reading ${BUFFER_FILE}...`);
+
 	try {
 		await fs.access(BUFFER_FILE);
 
