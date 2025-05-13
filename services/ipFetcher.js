@@ -1,19 +1,29 @@
 const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
-const { axios } = require('./axios.js');
-const isLocalIP = require('../isLocalIP.js');
+const { sefinek } = require('./axios.js');
+const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
 const logger = require('../logger.js');
-const { IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
+const { IP_ASSIGNMENT, IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
 
 const ipAddresses = new Set();
 let ipv6ErrorCount = 0, ipv6ErrorLogged = false;
 
-const fetchIPAddress = async family => {
+const fetchLocalIPs = () => {
+	for (const ifaceList of Object.values(networkInterfaces())) {
+		for (const iface of ifaceList) {
+			const addr = iface?.address;
+			if (addr && !iface.internal && !isSpecialPurposeIP(addr)) ipAddresses.add(addr);
+		}
+	}
+};
+
+const fetchIPAddress = async (family, attempt = 1) => {
+	if (family === 0) return fetchLocalIPs();
 	if (family === 6 && (!IPv6_SUPPORT || ipv6ErrorLogged)) return;
 
 	try {
-		const { data } = await axios('https://api.sefinek.net/api/v2/ip', {
+		const { data } = await sefinek.get('https://api.sefinek.net/api/v2/ip', {
 			httpsAgent: new https.Agent({ family }),
 		});
 
@@ -23,12 +33,13 @@ const fetchIPAddress = async family => {
 			if (family === 6 && ipv6ErrorCount > 0) {
 				logger.log(`IPv6 is now working. It succeeded after ${ipv6ErrorCount} failed attempts.`, 1);
 				ipv6ErrorCount = 0;
+				ipv6ErrorLogged = false;
 			}
 		} else {
 			logger.log(`Unexpected API response: success=${data?.success}, message=${data?.message}`, 2);
 		}
 	} catch (err) {
-		logger.log(`Failed to fetch IPv${family} address: ${err.message}`, 3);
+		logger.log(`Failed to fetch IPv${family} address (attempt ${attempt}): ${err.message}`, 3);
 
 		if (family === 6) {
 			ipv6ErrorCount++;
@@ -36,28 +47,24 @@ const fetchIPAddress = async family => {
 			if (ipv6ErrorCount >= 6 && !ipv6ErrorLogged) {
 				ipv6ErrorLogged = true;
 				logger.log('IPv6 address could not be retrieved after multiple attempts. Disabling further checks.', 2);
-			} else {
+			} else if (attempt < 6) {
 				await new Promise(resolve => setTimeout(resolve, 4000));
-				await fetchIPAddress(6);
+				await fetchIPAddress(6, attempt + 1);
 			}
 		}
 	}
 };
 
-const fetchLocalIPs = () => {
-	for (const iface of Object.values(networkInterfaces()).flat()) {
-		const addr = iface?.address;
-		if (addr && !iface.internal && !isLocalIP(addr)) ipAddresses.add(addr);
+const refreshServerIPs = async () => {
+	try {
+		await Promise.all([fetchIPAddress(0), fetchIPAddress(4), fetchIPAddress(6)]);
+	} catch (err) {
+		logger.log(`Failed to refresh IP addresses: ${err.message}`, 3);
 	}
 };
 
-const refreshServerIPs = async () => {
-	await Promise.all([fetchIPAddress(4), fetchIPAddress(6)]);
-	fetchLocalIPs();
-};
-
 (async () => {
-	new CronJob(IP_REFRESH_SCHEDULE || '0 */6 * * *', refreshServerIPs, null, true);
+	if (IP_ASSIGNMENT === 'dynamic') new CronJob(IP_REFRESH_SCHEDULE || '0 */6 * * *', refreshServerIPs, null, true);
 })();
 
 module.exports = {

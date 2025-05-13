@@ -4,12 +4,18 @@ const { version, name, repoFullUrl } = require('../repo.js');
 const logger = require('../logger.js');
 
 const USER_AGENT = `Mozilla/5.0 (compatible; ${name}/${version}; +${repoFullUrl})`;
-const COMMON_HEADERS = {
+const DEFAULT_HEADERS = {
 	'User-Agent': USER_AGENT,
 	'Accept': 'application/json',
 	'Cache-Control': 'no-cache',
 	'Connection': 'keep-alive',
 };
+
+const HEADERS_BULK_REPORT = {
+	...DEFAULT_HEADERS,
+	'Content-Type': 'application/json',
+};
+
 const BASE_URLS = {
 	sniffcat: 'https://sefinek.net', // TODO
 	abuseipdb: 'https://api.abuseipdb.com/api/v2',
@@ -23,8 +29,10 @@ if (!resolvedBaseURL) {
 	process.exit(1);
 }
 
-const api = axios.create({ baseURL: resolvedBaseURL, timeout: 50000, headers: COMMON_HEADERS });
-const webhook = axios.create({ timeout: 20000, headers: COMMON_HEADERS });
+const api = axios.create({ baseURL: resolvedBaseURL, timeout: 45000, headers: DEFAULT_HEADERS });
+const bulk = axios.create({ baseURL: resolvedBaseURL, timeout: 60000, headers: HEADERS_BULK_REPORT });
+const sefinek = axios.create({ timeout: 30000, headers: DEFAULT_HEADERS });
+const webhook = axios.create({ timeout: 15000, headers: DEFAULT_HEADERS });
 
 const retryOptions = {
 	retries: 3,
@@ -37,6 +45,8 @@ const retryOptions = {
 };
 
 axiosRetry(api, retryOptions);
+axiosRetry(bulk, retryOptions);
+axiosRetry(sefinek, retryOptions);
 axiosRetry(webhook, retryOptions);
 
-module.exports = { axios: api, webhook };
+module.exports = { axios: api, bulk, sefinek, webhook };

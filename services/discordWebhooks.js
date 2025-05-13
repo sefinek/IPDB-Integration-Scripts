@@ -1,13 +1,13 @@
 const { webhook } = require('./axios.js');
 const { version, authorAndName } = require('../repo.js');
-const { SERVER_ID, DISCORD_WEBHOOKS_ENABLED, DISCORD_WEBHOOKS_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
+const { SERVER_ID, DISCORD_WEBHOOK_ENABLED, DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
 const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || null;
 
 module.exports = async (msg, hex) => {
-	if (!msg || !DISCORD_WEBHOOKS_ENABLED || !DISCORD_WEBHOOKS_URL || SERVER_ID === 'development') return;
+	if (!msg || !DISCORD_WEBHOOK_ENABLED || !DISCORD_WEBHOOK_URL || SERVER_ID === 'development') return;
 
 	try {
-		const res = await webhook.post(DISCORD_WEBHOOKS_URL, {
+		const res = await webhook.post(DISCORD_WEBHOOK_URL, {
 			username,
 			embeds: [{
 				description: msg
