@@ -56,6 +56,8 @@ const fetchIPAddress = async (family, attempt = 1) => {
 };
 
 const refreshServerIPs = async () => {
+	logger.log('Trying to fetch your IPv4 and IPv6 address from api.sefinek.net...');
+
 	try {
 		await Promise.all([fetchIPAddress(0), fetchIPAddress(4), fetchIPAddress(6)]);
 	} catch (err) {

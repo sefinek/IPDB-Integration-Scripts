@@ -4,7 +4,7 @@ const { CronJob } = require('cron');
 const path = require('node:path');
 const restartApp = require('./reloadApp.js');
 const logger = require('../logger.js');
-const { AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
+const { SERVER_ID, AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
 const git = simpleGit();
 const pkgPath = path.resolve(__dirname, '../../package.json');
@@ -16,8 +16,10 @@ const getLocalVersion = () => {
 
 const pull = async () => {
 	try {
-		logger.log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
-		await git.reset(['--hard']);
+		if (SERVER_ID !== 'development') {
+			logger.log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
+			await git.reset(['--hard']);
+		}
 
 		logger.log('Pulling the repository and the required submodule...');
 		const { summary } = await git.pull(['--recurse-submodules']);

@@ -22,6 +22,8 @@ const ensureCacheDir = async () => {
 
 const loadReportedIPs = async () => {
 	if (!CACHE_FILE) return;
+
+	logger.log(`Reading ${CACHE_FILE}...`);
 	await ensureCacheDir();
 
 	try {
@@ -33,8 +35,6 @@ const loadReportedIPs = async () => {
 				const [ip, time] = line.trim().split(/\s+/);
 				if (ip && !isNaN(time)) reportedIPs.set(ip, Number(time));
 			});
-
-		logger.log(`Loaded ${reportedIPs.size} IPs from ${CACHE_FILE}`, 1);
 	} catch (err) {
 		if (err.code === 'ENOENT') {
 			logger.log(`${CACHE_FILE} does not exist. No data to load.`);
