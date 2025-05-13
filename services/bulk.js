@@ -3,10 +3,10 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { axios } = require('../services/axios.js');
+const { bulk } = require('../services/axios.js');
+const { ABUSEIPDB } = require('../../services/headers.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const logger = require('../logger.js');
-const { ABUSEIPDB_API_KEY } = require('../../config.js').MAIN;
 
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
@@ -49,8 +49,6 @@ const loadBufferFromFile = async () => {
 			if (!ip || !timestamp) continue;
 			BULK_REPORT_BUFFER.set(ip, { categories, timestamp: new Date(timestamp).getTime(), comment });
 		}
-
-		await fs.unlink(BUFFER_FILE);
 	} catch (err) {
 		if (err.code !== 'ENOENT') logger.log(`Failed to parse/load buffer file: ${err.message}`, 3, true);
 	}
@@ -82,9 +80,9 @@ const sendBulkReport = async () => {
 			contentType: 'text/csv',
 		});
 
-		const { data } = await axios.post('/bulk-report', form, {
+		const { data } = await bulk.post('/bulk-report', form, {
 			headers: {
-				Key: ABUSEIPDB_API_KEY,
+				...ABUSEIPDB,
 				...form.getHeaders(),
 			},
 		});
