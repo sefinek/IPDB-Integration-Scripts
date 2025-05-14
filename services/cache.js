@@ -23,7 +23,6 @@ const ensureCacheDir = async () => {
 const loadReportedIPs = async () => {
 	if (!CACHE_FILE) return;
 
-	logger.log(`Reading ${CACHE_FILE}...`);
 	await ensureCacheDir();
 
 	try {
