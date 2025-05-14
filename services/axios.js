@@ -17,7 +17,7 @@ const HEADERS_BULK_REPORT = {
 };
 
 const BASE_URLS = {
-	sniffcat: 'https://sefinek.net', // TODO
+	sniffcat: 'https://api.netcatdb.com/api/v1',
 	abuseipdb: 'https://api.abuseipdb.com/api/v2',
 	spamverify: 'https://api.spamverify.com/v1/ip',
 };
