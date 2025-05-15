@@ -1,0 +1,15 @@
+const { authorEmailWebsite } = require('../repo.js');
+const { color, reset, support } = require('./utils/helper.js');
+const logger = require('../logger.js');
+
+module.exports = () => {
+	console.log(`
+  ${color('255;0;130')} _____   ____       _       
+  ${color('235;0;120')}|_   _| |  _ \\ ___ | |_     ${color('235;0;120')}T${color('235;0;120')}-${color('235;0;120')}Pot To AbuseIPDB
+  ${color('215;0;110')}  | |   | |_) / _ \\| __|    ${color('235;0;120')}${authorEmailWebsite}
+  ${color('195;0;95')}  | |   |  __/ (_) | |_     ${color('235;0;120')}GPL-3.0 License
+  ${color('175;0;85')}  |_|   |_|   \\___/ \\__|${reset}
+`);
+
+	logger.log(support);
+};
