@@ -64,22 +64,19 @@ const summaryEmbed = async () => {
 			.map(([h, c]) => [parseInt(h), c])
 			.sort((a, b) => a[0] - b[0]);
 
-		const top3 = [...Object.entries(hourlySummary)]
+		const top3Sorted = [...Object.entries(hourlySummary)]
 			.map(([h, c]) => [parseInt(h), c])
 			.sort((a, b) => b[1] - a[1])
-			.slice(0, 3)
-			.map(([h]) => h);
+			.slice(0, 3);
 
+		const top3 = top3Sorted.map(([h]) => h);
 		const total = sortedChrono.reduce((sum, [, c]) => sum + c, 0);
-
 		const summaryStr = sortedChrono
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}${top3.includes(h) ? ' 🔥' : ''}`)
 			.join('\n');
 		logger.log(`Midnight. Summary of IP address reports (${total}) from ${yesterdayString}:\n${summaryStr}`);
 
-		const peakStr = [...top3]
-			.map(h => [h, hourlySummary[h]])
-			.sort((a, b) => b[1] - a[1])
+		const peakStr = top3Sorted
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}`)
 			.join('\n');
 		logger.log(`Top 3 peaks:\n${peakStr}`);
