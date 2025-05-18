@@ -21,11 +21,10 @@ const summaryEmbed = async () => {
 	let data;
 	if (SERVER_ID === 'development') {
 		logger.log('Daily summary » Using test data instead of reading cache file [DEV]');
-		data = [
-			`1.1.1.1 ${baseTs}`,
-			`8.8.8.8 ${baseTs + 3600}`,
-			`1.0.0.1 ${baseTs}`,
-		].join('\n');
+		const generateRandomIp = () => Array(4).fill(0).map(() => Math.floor(Math.random() * 256)).join('.');
+		const generateTimestamps = () => baseTs + Math.floor(Math.random() * 86400);
+		const entries = Array.from({ length: Math.floor(Math.random() * 1001) + 4000 }, () => `${generateRandomIp()} ${generateTimestamps()}`);
+		data = entries.join('\n');
 	} else {
 		try {
 			await fs.access(CACHE_FILE);
@@ -61,19 +60,26 @@ const summaryEmbed = async () => {
 			return logger.log(`Daily summary » No reports found for ${yesterdayString}`, 2);
 		}
 
-		const sorted = Object.entries(hourlySummary)
+		const sortedChrono = Object.entries(hourlySummary)
 			.map(([h, c]) => [parseInt(h), c])
-			.sort((a, b) => b[1] - a[1]);
+			.sort((a, b) => a[0] - b[0]);
 
-		const total = sorted.reduce((sum, [, c]) => sum + c, 0);
-		const top3 = sorted.slice(0, 3).map(([h]) => h);
+		const top3 = [...Object.entries(hourlySummary)]
+			.map(([h, c]) => [parseInt(h), c])
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 3)
+			.map(([h]) => h);
 
-		const summaryStr = sorted
+		const total = sortedChrono.reduce((sum, [, c]) => sum + c, 0);
+
+		const summaryStr = sortedChrono
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}${top3.includes(h) ? ' 🔥' : ''}`)
 			.join('\n');
 		logger.log(`Midnight. Summary of IP address reports (${total}) from ${yesterdayString}:\n${summaryStr}`);
 
-		const peakStr = sorted.slice(0, 3)
+		const peakStr = [...top3]
+			.map(h => [h, hourlySummary[h]])
+			.sort((a, b) => b[1] - a[1])
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}`)
 			.join('\n');
 		logger.log(`Top 3 peaks:\n${peakStr}`);
@@ -88,6 +94,6 @@ const summaryEmbed = async () => {
 };
 
 module.exports = async () => {
-	await summaryEmbed();
+	// await summaryEmbed();
 	new CronJob('0 0 * * *', summaryEmbed, null, true);
 };
