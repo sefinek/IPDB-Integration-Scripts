@@ -17,7 +17,7 @@ const getLocalVersion = () => {
 const pull = async () => {
 	try {
 		if (SERVER_ID !== 'development') {
-			logger.log('Resetting local repository to HEAD (--hard)...', 0, EXTENDED_LOGS);
+			if (EXTENDED_LOGS) logger.log('Resetting local repository to HEAD (--hard)...');
 			await git.reset(['--hard']);
 		}
 
