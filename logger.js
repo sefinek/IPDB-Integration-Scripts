@@ -13,8 +13,8 @@ class Logger {
 		console[method](IS_PM2 ? `${label} ${msg}` : `${lvlColor}${label} ${msg}${reset}`);
 	}
 
-	static async webhook(msg, level = 0) {
-		const { hex } = LEVELS[level];
+	static async webhook(msg, level) {
+		const { hex } = LEVELS[level] || LEVELS[0];
 		await require('./services/discordWebhooks.js')(msg, hex);
 	}
 
