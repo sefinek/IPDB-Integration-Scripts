@@ -1,5 +1,5 @@
 const { webhook } = require('./axios.js');
-const { version, authorAndName } = require('../repo.js');
+const { version, repoSlug } = require('../repo.js');
 const { SERVER_ID, DISCORD_WEBHOOK_ENABLED, DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
 const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || null;
 
@@ -16,7 +16,7 @@ module.exports = async (msg, hex) => {
 					.trim(),
 				color: hex ?? 0x008FD1,
 				footer: {
-					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${authorAndName} [v${version}]`,
+					text: `${SERVER_ID ? `${SERVER_ID} • ` : ''}${repoSlug} [v${version}]`,
 				},
 				timestamp: new Date().toISOString(),
 			}],

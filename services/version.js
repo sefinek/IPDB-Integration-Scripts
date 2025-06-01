@@ -1,9 +1,9 @@
 const semver = require('semver');
 const { axios } = require('./axios.js');
-const { version, authorAndName } = require('../repo.js');
+const { version, repoSlug } = require('../repo.js');
 const logger = require('../logger.js');
 
-const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${authorAndName}/main/package.json`;
+const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${repoSlug}/main/package.json`;
 
 (async () => {
 	logger.log('Checking for new versions...');
