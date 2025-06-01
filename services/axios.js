@@ -1,9 +1,9 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
-const { version, name, repoFullUrl } = require('../repo.js');
+const { version, repoName, repoUrl } = require('../repo.js');
 const logger = require('../logger.js');
 
-const USER_AGENT = `Mozilla/5.0 (compatible; ${name}/${version}; +${repoFullUrl})`;
+const USER_AGENT = `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoUrl})`;
 const DEFAULT_HEADERS = {
 	'User-Agent': USER_AGENT,
 	'Accept': 'application/json',
@@ -22,10 +22,10 @@ const BASE_URLS = {
 	spamverify: 'https://api.spamverify.com/v1/ip',
 };
 
-const matchedKey = Object.keys(BASE_URLS).find(key => name.toLowerCase().includes(key));
+const matchedKey = Object.keys(BASE_URLS).find(key => repoName.toLowerCase().includes(key));
 const resolvedBaseURL = BASE_URLS[matchedKey];
 if (!resolvedBaseURL) {
-	logger.log(`No matching baseURL found for name '${name}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
+	logger.log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
 	process.exit(1);
 }
 

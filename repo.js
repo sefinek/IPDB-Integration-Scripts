@@ -1,8 +1,17 @@
-const { version, homepage, author: authorEmailWebsite } = require('../package.json');
+const { version, author: authorMeta, repository, license } = require('../package.json');
 
-const match = homepage.match(/github\.com\/([^\\/]+)\/([^#\\/]+)/) || [];
-const [, author, name] = match;
-const authorAndName = `${author}/${name}`;
-const repoFullUrl = homepage.split('#')[0] || '';
+const [, repoAuthor = '', repoName = ''] =
+repository?.url?.match(/github\.com[:/]+([^/]+)\/([^/#.]+)(?:\.git)?/) || [];
 
-module.exports = { version, author, authorEmailWebsite, name, authorAndName, repoFullUrl };
+const repoSlug = `${repoAuthor}/${repoName}`;
+const repoUrl = `https://github.com/${repoSlug}`;
+
+module.exports = {
+	version,
+	repoAuthor,
+	authorMeta,
+	repoName,
+	repoSlug,
+	repoUrl,
+	license,
+};
