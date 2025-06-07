@@ -1,10 +1,10 @@
-const { authorMeta } = require('../repo.js');
+const { version, authorMeta, license } = require('../repo.js');
 const { color, reset, headerText, authorText, support } = require('./utils/helper.js');
 const logger = require('../logger.js');
 
-module.exports = header => {
+module.exports = () => {
 	console.log(`
-     ${color('255;160;0')}   .--.       ${headerText(header)}
+     ${color('255;160;0')}   .--.       ${headerText(`Cloudflare WAF To AbuseIPDB [v${version}] [${license}]`)}
      ${color('255;140;0')}.-(    ).     ${authorText(authorMeta)}
     ${color('255;120;0')}(___.__)__)${reset}
 `);
