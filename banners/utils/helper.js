@@ -1,3 +1,5 @@
+'use strict';
+
 const gradientText = require('./gradientText.js');
 
 const IS_PM2 = 'pm_id' in process.env;
@@ -8,11 +10,11 @@ const reset = IS_PM2 ? '' : '\x1b[0m';
 const headerText = text => IS_PM2 ? text : gradientText(text, 145, 58);
 const authorText = text => IS_PM2 ? text : gradientText(text, 145, 88);
 
-module.exports = {
+module.exports = Object.freeze({
 	IS_PM2,
 	color,
 	reset,
 	headerText,
 	authorText,
 	support: 'If you like it, consider supporting me — I\'d really appreciate it! https://sefinek.net/donate',
-};
+});
