@@ -82,7 +82,7 @@ const sendBulkReport = async () => {
 
 		const { data } = await bulk.post('/bulk-report', form, {
 			headers: {
-				...ABUSEIPDB,
+				...ABUSEIPDB.headers,
 				...form.getHeaders(),
 			},
 		});
