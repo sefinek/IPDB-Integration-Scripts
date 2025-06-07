@@ -1,3 +1,5 @@
+'use strict';
+
 const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
@@ -69,7 +71,7 @@ const refreshServerIPs = async () => {
 	if (IP_ASSIGNMENT === 'dynamic') new CronJob(IP_REFRESH_SCHEDULE || '0 */6 * * *', refreshServerIPs, null, true);
 })();
 
-module.exports = {
+module.exports = Object.freeze({
 	refreshServerIPs,
 	getServerIPs: () => [...ipAddresses],
-};
+});

@@ -1,3 +1,5 @@
+'use strict';
+
 const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
@@ -64,10 +66,10 @@ const isIPReportedRecently = ip => {
 
 const markIPAsReported = ip => reportedIPs.set(ip, Math.floor(Date.now() / 1000));
 
-module.exports = {
+module.exports = Object.freeze({
 	reportedIPs,
 	loadReportedIPs,
 	saveReportedIPs,
 	isIPReportedRecently,
 	markIPAsReported,
-};
+});

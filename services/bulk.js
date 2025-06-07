@@ -1,3 +1,5 @@
+'use strict';
+
 const FormData = require('form-data');
 const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
@@ -82,7 +84,7 @@ const sendBulkReport = async () => {
 
 		const { data } = await bulk.post('/bulk-report', form, {
 			headers: {
-				...ABUSEIPDB,
+				...ABUSEIPDB.headers,
 				...form.getHeaders(),
 			},
 		});
@@ -109,9 +111,9 @@ const sendBulkReport = async () => {
 	}
 };
 
-module.exports = {
+module.exports = Object.freeze({
 	saveBufferToFile,
 	loadBufferFromFile,
 	sendBulkReport,
 	BULK_REPORT_BUFFER,
-};
+});
