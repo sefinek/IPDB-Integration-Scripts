@@ -1,3 +1,5 @@
+'use strict';
+
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
@@ -49,4 +51,4 @@ axiosRetry(bulk, retryOptions);
 axiosRetry(sefinek, retryOptions);
 axiosRetry(webhook, retryOptions);
 
-module.exports = { axios: api, bulk, sefinek, webhook };
+module.exports = Object.freeze({ axios: api, bulk, sefinek, webhook });
