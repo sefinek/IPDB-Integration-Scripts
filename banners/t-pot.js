@@ -1,5 +1,5 @@
 const { version, authorMeta, repoUrl, license } = require('../repo.js');
-const { color, reset, support } = require('./utils/helper.js');
+const { color, reset, donate } = require('./utils/helper.js');
 const logger = require('../logger.js');
 
 module.exports = () => {
@@ -11,5 +11,5 @@ module.exports = () => {
   ${color('175;0;85')}  |_|   |_|   \\___/ \\__|${reset}
 `);
 
-	logger.log(support);
+	logger.log(donate);
 };

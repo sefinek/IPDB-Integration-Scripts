@@ -16,5 +16,5 @@ module.exports = Object.freeze({
 	reset,
 	headerText,
 	authorText,
-	support: 'If you like it, consider supporting me — I\'d really appreciate it! https://sefinek.net/donate',
+	donate: 'If you like it, consider supporting me — I\'d really appreciate it! https://sefinek.net/donate',
 });
