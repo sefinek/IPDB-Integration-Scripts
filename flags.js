@@ -150,7 +150,12 @@ const createFlagSet = () => {
 	const toIDs = (integration = prettyName) => {
 		const map = MAPPINGS[integration];
 		if (!map) return [];
-		return list().map(f => map.get(f)).filter(id => typeof id === 'number');
+
+		return list().map(f => {
+			const id = map.get(f);
+			if (typeof id === 'number') return id;
+			return integration === 'SniffCat' ? 27 : integration === 'AbuseIPDB' ? 15 : undefined;
+		}).filter(id => typeof id === 'number');
 	};
 
 	const toString = (integration = prettyName) => toIDs(integration).join(',');
