@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
+const { FLAGS, createFlagSet } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { DIONAEA_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -12,56 +13,59 @@ const getReportDetails = (entry, dpt) => {
 	const proto = entry?.connection?.protocol || 'unknown';
 	const timestamp = entry?.timestamp || new Date().toISOString();
 
-	let categories, comment;
+	const flags = createFlagSet();
+	let comment;
+
 	switch (proto) {
 	case 'mssqld': {
 		const username = entry?.credentials?.username?.[0];
 		const password = entry?.credentials?.password?.[0];
 		if (username && !password) {
-			categories = '18';
+			flags.add(FLAGS.BRUTE_FORCE);
 			comment = `MSSQL traffic (on ${dpt}) with username ${username} and empty password`;
 		} else if (username && password) {
-			categories = '18';
+			flags.add(FLAGS.BRUTE_FORCE);
 			comment = `MSSQL traffic (on ${dpt}) with credentials ${username}:${password}`;
 		} else {
-			categories = '14';
+			flags.add(FLAGS.PORT_SCAN);
 			comment = `MSSQL traffic (on ${dpt}) without login credentials`;
 		}
 		break;
 	}
 	case 'httpd':
-		categories = '21,19';
+		flags.add(FLAGS.HTTP, FLAGS.BAD_WEB_BOT);
 		comment = `Incoming HTTP traffic on port ${dpt}`;
 		break;
 	case 'ftp':
-		categories = '5,18';
+		flags.add(FLAGS.FTP, FLAGS.BRUTE_FORCE);
 		comment = `FTP brute-force or probing on port ${dpt}`;
 		break;
 	case 'smbd':
-		categories = '23';
+		flags.add(FLAGS.SMB);
 		comment = `SMB traffic on port ${dpt}`;
 		break;
 	case 'mysql':
-		categories = '18';
+		flags.add(FLAGS.BRUTE_FORCE);
 		comment = `MySQL brute-force or probing on port ${dpt}`;
 		break;
 	case 'tftp':
-		categories = '20';
+		flags.add(FLAGS.EXPLOITED_HOST);
 		comment = `TFTP protocol traffic on ${dpt}`;
 		break;
-	case 'upnp': case 'mqtt':
-		categories = '23';
+	case 'upnp':
+	case 'mqtt':
+		flags.add(FLAGS.IOT_TARGETED);
 		comment = `Unauthorized ${proto.toUpperCase()} traffic on ${dpt}`;
 		break;
 	default:
-		categories = '14';
+		flags.add(FLAGS.PORT_SCAN);
 		comment = `Unauthorized traffic on ${dpt}/${proto}`;
 	}
 
 	return {
 		proto: proto.toUpperCase(),
 		comment: `Honeypot ${SERVER_ID ? `[${SERVER_ID}]` : 'hit'}: ${comment}`,
-		categories,
+		categories: flags.toString(),
 		timestamp,
 	};
 };

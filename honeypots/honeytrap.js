@@ -6,6 +6,7 @@ const ipSanitizer = require('../ipSanitizer.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { HONEYTRAP_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
+const { FLAGS, createFlagSet } = require('../flags.js');
 
 const LOG_FILE = path.resolve(HONEYTRAP_LOG_FILE);
 const HEADER_PRIORITY = ['user-agent', 'accept', 'accept-language', 'accept-encoding'];
@@ -64,39 +65,41 @@ const getReportDetails = (entry, dpt) => {
 	const simplifiedAscii = ascii.replace(/\s+/g, ' ').toLowerCase();
 	const payloadLen = entry?.attack_connection?.payload?.length || 0;
 
-	let categories, comment;
+	const flags = createFlagSet();
+	let comment;
+
 	switch (true) {
 	case payloadLen === 0:
-		categories = '14';
+		flags.add(FLAGS.PORT_SCAN);
 		comment = `Empty payload on ${dpt}/${proto} (likely service probe)`;
 		break;
 	case payloadLen > 1000:
-		categories = '15';
+		flags.add(FLAGS.BAD_WEB_BOT);
 		comment = `Large payload (${payloadLen} bytes) on ${dpt}/${proto}`;
 		break;
 	case (/HTTP\/(0\.9|1\.0|1\.1|2|3)/i).test(simplifiedAscii):
-		categories = '21';
+		flags.add(FLAGS.HTTP, FLAGS.BAD_WEB_BOT);
 		comment = parseHttpRequest(ascii, dpt);
 		break;
 	case (/\bssh\b/).test(simplifiedAscii):
-		categories = '18,22';
+		flags.add(FLAGS.SSH);
 		comment = `SSH handshake/banner on ${dpt}/${proto} (${payloadLen} bytes of payload)`;
 		break;
 	case simplifiedAscii.includes('cookie:'):
-		categories = '21,15';
+		flags.add(FLAGS.HTTP, FLAGS.BAD_WEB_BOT);
 		comment = `HTTP header with cookie on ${dpt}/${proto}`;
 		break;
 	case (/(admin|root|wget|curl|bash|eval|php|bin)/).test(simplifiedAscii):
-		categories = '15';
+		flags.add(FLAGS.COMMAND_INJECTION);
 		comment = `Suspicious payload on ${dpt}/${proto} (possible command injection)`;
 		break;
 	default:
-		categories = '14';
+		flags.add(FLAGS.PORT_SCAN);
 		comment = `Unauthorized traffic on ${dpt}/${proto} (${payloadLen} bytes of payload)`;
 		break;
 	}
 
-	return { proto, baseComment: comment, categories, timestamp: entry?.['@timestamp'] };
+	return { proto, baseComment: comment, categories: flags.toString(), timestamp: entry?.['@timestamp'] };
 };
 
 const flushBuffer = async reportIp => {

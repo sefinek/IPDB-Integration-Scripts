@@ -3,6 +3,7 @@ const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const ipSanitizer = require('../ipSanitizer.js');
+const { FLAGS, createFlagSet } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -14,9 +15,10 @@ const CREDS_LIMIT = 900;
 const ipBuffers = new Map();
 
 const extractSessionData = sessions => {
-	const credsSet = new Set();
 	const commands = [];
-	const categories = new Set(['15']);
+	const flags = createFlagSet();
+
+	const credsSet = new Set();
 	const fingerprints = new Set();
 	const uploads = new Set();
 	const tunnels = new Set();
@@ -37,7 +39,7 @@ const extractSessionData = sessions => {
 		if (s.uploads) s.uploads.forEach(f => uploads.add(f));
 		if (s.tunnels) s.tunnels.forEach(t => tunnels.add(t));
 		if (s.download?.url) {
-			categories.add('21');
+			flags.add(FLAGS.WEB_APP_ATTACK);
 			downloadUrls.add(s.download.url);
 		}
 	}
@@ -46,15 +48,16 @@ const extractSessionData = sessions => {
 	const loginAttempts = creds.length;
 	const cmdCount = commands.length;
 
-	if (loginAttempts >= 2) categories.add('18');
-	if (proto === 'ssh') categories.add('22');
-	if (proto === 'telnet') categories.add('23');
-	if (cmdCount) categories.add('20');
-	if (!loginAttempts && !cmdCount) categories.add('14');
+	if (loginAttempts >= 2) flags.add(FLAGS.BRUTE_FORCE);
+	if (proto === 'ssh') flags.add(FLAGS.SSH);
+	if (proto === 'telnet') flags.add(FLAGS.TELNET);
+	if (cmdCount) flags.add(FLAGS.EMAIL);
+	if (!loginAttempts && !cmdCount) flags.add(FLAGS.PORT_SCAN);
 
 	return {
 		dpt, proto, sshVersion, timestamp, creds, commands,
-		categories, downloadUrls: [...downloadUrls],
+		categories: flags.toString(),
+		downloadUrls: [...downloadUrls],
 		fingerprints: [...fingerprints],
 		uploads: [...uploads],
 		tunnels: [...tunnels],
@@ -110,7 +113,7 @@ const flushBuffer = async (srcIp, reportIp) => {
 	const [, ...restLines] = shortComment.split('\n');
 	const rest = restLines.length ? `\n${restLines.join('\n')}` : '';
 
-	await reportIp('COWRIE', { srcIp, dpt, proto, timestamp }, [...categories].join(','), shortComment);
+	await reportIp('COWRIE', { srcIp, dpt, proto, timestamp }, categories, shortComment);
 	if (restLines.length) await logger.log(rest);
 	await logger.webhook(`### Cowrie: ${srcIp} on ${dpt}/${proto}${rest}`);
 
