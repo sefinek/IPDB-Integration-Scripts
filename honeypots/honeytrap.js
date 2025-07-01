@@ -6,7 +6,7 @@ const ipSanitizer = require('../ipSanitizer.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { HONEYTRAP_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
-const { FLAGS, createFlagSet } = require('../flags.js');
+const { FLAGS, createFlagCollection } = require('../flags.js');
 
 const LOG_FILE = path.resolve(HONEYTRAP_LOG_FILE);
 const HEADER_PRIORITY = ['user-agent', 'accept', 'accept-language', 'accept-encoding'];
@@ -65,7 +65,7 @@ const getReportDetails = (entry, dpt) => {
 	const simplifiedAscii = ascii.replace(/\s+/g, ' ').toLowerCase();
 	const payloadLen = entry?.attack_connection?.payload?.length || 0;
 
-	const flags = createFlagSet();
+	const flags = createFlagCollection();
 	let comment;
 
 	switch (true) {
