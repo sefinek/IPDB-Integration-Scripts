@@ -1,4 +1,4 @@
-const { prettyName } = require('./repo');
+const { prettyName } = require('./repo.js');
 
 /**
  * @typedef {
@@ -142,20 +142,33 @@ const MAPPINGS = Object.freeze({
 	]),
 });
 
-const createFlagSet = () => {
+const createFlagCollection = () => {
 	const flags = new Set();
 
 	const list = () => Array.from(flags);
 
+	const FALLBACK_IDS = {
+		SniffCat: 27,
+		AbuseIPDB: 15,
+	};
+
 	const toIDs = (integration = prettyName) => {
 		const map = MAPPINGS[integration];
-		if (!map) return [];
+		if (!map) throw new Error(`Unsupported integration: ${integration}`);
 
-		return list().map(f => {
-			const id = map.get(f);
-			if (typeof id === 'number') return id;
-			return integration === 'SniffCat' ? 27 : integration === 'AbuseIPDB' ? 15 : undefined;
-		}).filter(id => typeof id === 'number');
+		const fallbackID = FALLBACK_IDS[integration];
+		if (typeof fallbackID !== 'number') {
+			throw new Error(`No fallback ID defined for integration: ${integration}`);
+		}
+
+		const currentFlags = list();
+		if (currentFlags.length === 0) return [fallbackID];
+
+		const ids = currentFlags
+			.map(f => map.get(f) ?? fallbackID)
+			.filter(id => typeof id === 'number');
+
+		return ids.length > 0 ? ids : [fallbackID];
 	};
 
 	const toString = (integration = prettyName) => toIDs(integration).join(',');
@@ -178,5 +191,5 @@ const createFlagSet = () => {
 module.exports = {
 	/** @type {Record<Flag, Flag>} */
 	FLAGS,
-	createFlagSet,
+	createFlagCollection,
 };
