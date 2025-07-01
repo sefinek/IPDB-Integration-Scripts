@@ -3,7 +3,7 @@ const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const ipSanitizer = require('../ipSanitizer.js');
-const { FLAGS, createFlagSet } = require('../flags.js');
+const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -16,7 +16,7 @@ const ipBuffers = new Map();
 
 const extractSessionData = sessions => {
 	const commands = [];
-	const flags = createFlagSet();
+	const flags = createFlagCollection();
 
 	const credsSet = new Set();
 	const fingerprints = new Set();

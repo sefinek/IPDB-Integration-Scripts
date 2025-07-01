@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
-const { FLAGS, createFlagSet } = require('../flags.js');
+const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const { DIONAEA_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -13,7 +13,7 @@ const getReportDetails = (entry, dpt) => {
 	const proto = entry?.connection?.protocol || 'unknown';
 	const timestamp = entry?.timestamp || new Date().toISOString();
 
-	const flags = createFlagSet();
+	const flags = createFlagCollection();
 	let comment;
 
 	switch (proto) {
