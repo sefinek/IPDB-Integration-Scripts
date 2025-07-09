@@ -2,18 +2,33 @@
 
 const { version, author: authorMeta, repository, license } = require('../package.json');
 
-const [, repoAuthor = '', repoName = ''] =
-repository?.url?.match(/github\.com[:/]+([^/]+)\/([^/#.]+)(?:\.git)?/) || [];
+const githubRepoRegex = /github\.com[:/]+([^/]+)\/([^/#.]+)(?:\.git)?/;
+const [, author = '', name = ''] = repository?.url?.match(githubRepoRegex) || [];
 
-const repoSlug = `${repoAuthor}/${repoName}`;
-const repoUrl = `https://github.com/${repoSlug}`;
+const slug = `${author}/${name}`;
+const url = `https://github.com/${slug}`;
+
+const nameMappings = {
+	sniffcat: 'SniffCat',
+	abuseipdb: 'AbuseIPDB',
+	spamverify: 'SpamVerify',
+};
+
+const getPrettyName = repo =>
+	Object.entries(nameMappings)
+		.reduce((best, [key, value]) =>
+			repo.toLowerCase().includes(key.toLowerCase()) && key.length > best.key.length
+				? { key, value }
+				: best,
+		{ key: '', value: repo }).value;
 
 module.exports = Object.freeze({
 	version,
-	repoAuthor,
+	repoAuthor: author,
 	authorMeta,
-	repoName,
-	repoSlug,
-	repoUrl,
+	repoName: name,
+	prettyName: getPrettyName(name),
+	repoSlug: slug,
+	repoUrl: url,
 	license,
 });
