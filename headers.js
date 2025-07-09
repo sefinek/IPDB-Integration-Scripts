@@ -1,6 +1,6 @@
 'use strict';
 
-const { SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../config.js').MAIN;
+const { SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../config.js').MAIN;
 
 const SNIFFCAT = {
 	headers: { 'X-Secret-Token': SNIFFCAT_API_KEY },
@@ -8,6 +8,10 @@ const SNIFFCAT = {
 
 const ABUSEIPDB = {
 	headers: { 'Key': ABUSEIPDB_API_KEY },
+};
+
+const SPAMVERIFY = {
+	headers: { 'Api-Key': SPAMVERIFY_API_KEY },
 };
 
 const SEFINEK_API = {
@@ -18,4 +22,4 @@ const CLOUDFLARE = {
 	headers: { 'Authorization': `Bearer ${CLOUDFLARE_API_KEY}` },
 };
 
-module.exports = Object.freeze({ SNIFFCAT, ABUSEIPDB, SEFINEK_API, CLOUDFLARE });
+module.exports = Object.freeze({ SNIFFCAT, ABUSEIPDB, SPAMVERIFY, SEFINEK_API, CLOUDFLARE });
