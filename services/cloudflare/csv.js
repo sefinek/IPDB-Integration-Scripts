@@ -7,7 +7,7 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const logger = require('../../logger.js');
 
-const CSV_FILE = path.join(__dirname, '..', 'tmp', 'reported_ips.csv');
+const CSV_FILE = path.join(__dirname, '..', '..', '..', 'tmp', 'reported_ips.csv');
 const CSV_COLUMNS = ['Timestamp', 'CF RayID', 'IP', 'Country', 'Hostname', 'Endpoint', 'User-Agent', 'Action taken', 'Status', 'Sefinek API'];
 const MAX_CSV_SIZE = 1024 * 1024;
 
