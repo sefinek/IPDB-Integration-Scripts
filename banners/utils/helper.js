@@ -16,5 +16,6 @@ module.exports = Object.freeze({
 	reset,
 	headerText,
 	authorText,
-	donate: 'If you like it, consider supporting me — I\'d really appreciate it! https://sefinek.net/donate',
+	donate: '💗 If you like it, consider supporting me. I\'d really appreciate it! https://sefinek.net/donate',
+	sniffcat: '📘 Report malicious addresses to the SniffCat database as well. A new and innovative alternative to AbuseIPDB: https://sniffcat.com',
 });
