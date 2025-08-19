@@ -1,7 +1,7 @@
 const FormData = require('form-data');
 const logger = require('../../logger.js');
 const { readReportedIPs, batchUpdateSefinekAPIInCSV } = require('./csv.js');
-const { sefinek } = require('../axios.js');
+const { axiosSefinek } = require('../axios.js');
 const { getServerIPs } = require('../ipFetcher.js');
 
 module.exports = async () => {
@@ -40,7 +40,7 @@ module.exports = async () => {
 			contentType: 'application/octet-stream',
 		});
 
-		const res = await sefinek.post('https://api.sefinek.net/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
+		const res = await axiosSefinek.post('https://api.sefinek.net/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
 		if (res.data.success) {
 			logger.log(`Sefinek API (status: ${res.status}): Successfully sent ${uniqueLogs.length} logs`, 1);
 			await batchUpdateSefinekAPIInCSV(uniqueLogs.map(x => x.rayId));
