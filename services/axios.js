@@ -45,7 +45,7 @@ const axiosService = axios.create({ baseURL: resolvedBaseURL, timeout: 25000, he
 const axiosBulk = axios.create({ baseURL: resolvedBaseURL, timeout: 60000, headers: { ...resolvedHeaders, 'Content-Type': 'multipart/form-data' } });
 const axiosSefinek = axios.create({ timeout: 25000, headers: HEADERS.sefinek });
 const axiosWebhook = axios.create({ timeout: 15000, headers: DEFAULT_HEADERS });
-const axiosCloudflare = axios.create({ timeout: 25000, headers: HEADERS.cloudflare });
+const axiosCloudflare = axios.create({ baseURL: 'https://api.cloudflare.com/client/v4', timeout: 25000, headers: HEADERS.cloudflare });
 
 // Axios retry
 const retryOptions = {
