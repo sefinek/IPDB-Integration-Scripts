@@ -1,8 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const PAYLOAD = require('./generateFirewallQuery.js');
-const { axios } = require('../axios.js');
-const headers = require('../../headers.js');
+const { axiosCloudflare } = require('../axios.js');
 const logger = require('../../logger.js');
 const { MAIN } = require('../../../config.js');
 
@@ -19,7 +18,7 @@ const fetchCloudflareEvents = async () => {
 
 	for (const zoneId of zoneIds) {
 		try {
-			const { data, status } = await axios.post('https://api.cloudflare.com/client/v4/graphql', PAYLOAD(10000, zoneId), headers.CLOUDFLARE);
+			const { data, status } = await axiosCloudflare.post('/graphql', PAYLOAD(10000, zoneId));
 
 			const events = data?.data?.viewer?.zones?.[0]?.firewallEventsAdaptive;
 			if (!events) throw new Error(`Failed to retrieve data from Cloudflare (status ${status}): ${JSON.stringify(data?.errors)}`);
