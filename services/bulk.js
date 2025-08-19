@@ -100,7 +100,7 @@ const sendBulkReport = async () => {
 		await fs.unlink(BUFFER_FILE);
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		logger.log(err.stack, 3, true);
+		logger.log(`bulk.js failed! ${err.stack} | ${err.response.data || 'Unknown response'}`, 3, true);
 	}
 };
 
