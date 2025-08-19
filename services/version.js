@@ -1,5 +1,5 @@
 const semver = require('semver');
-const { axios } = require('./axios.js');
+const { axiosGeneric } = require('./axios.js');
 const { version, repoSlug } = require('../repo.js');
 const logger = require('../logger.js');
 
@@ -9,7 +9,7 @@ const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${repoSlug}/main/pac
 	logger.log('Checking for new versions...');
 
 	try {
-		const { data: { version: latest } } = await axios.get(PACKAGE_JSON_URL);
+		const { data: { version: latest } } = await axiosGeneric.get(PACKAGE_JSON_URL);
 
 		if (semver.gt(latest, version)) {
 			logger.log(`A new version is available: v${version} → v${latest}. Please update.`, 0, true);

@@ -6,7 +6,6 @@ const { stringify } = require('csv-stringify/sync');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { bulk } = require('../services/axios.js');
-const { ABUSEIPDB } = require('../headers.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const logger = require('../logger.js');
 
@@ -82,13 +81,7 @@ const sendBulkReport = async () => {
 			contentType: 'text/csv',
 		});
 
-		const { data } = await bulk.post('/bulk-report', form, {
-			headers: {
-				...ABUSEIPDB.headers,
-				...form.getHeaders(),
-			},
-		});
-
+		const { data } = await bulk.post('/bulk-report', form, { headers: { ...form.getHeaders() } });
 		const saved = data?.data?.savedReports ?? 0;
 		const failed = data?.data?.invalidReports?.length ?? 0;
 

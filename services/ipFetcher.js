@@ -3,7 +3,7 @@
 const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
-const { sefinek } = require('./axios.js');
+const { axiosSefinek } = require('./axios.js');
 const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
 const logger = require('../logger.js');
 const { IP_ASSIGNMENT, IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
@@ -25,7 +25,7 @@ const fetchIPAddress = async (family, attempt = 1) => {
 	if (family === 6 && (!IPv6_SUPPORT || ipv6ErrorLogged)) return;
 
 	try {
-		const { data } = await sefinek.get('https://api.sefinek.net/api/v2/ip', {
+		const { data } = await axiosSefinek.get('https://api.sefinek.net/api/v2/ip', {
 			httpsAgent: new https.Agent({ family }),
 		});
 

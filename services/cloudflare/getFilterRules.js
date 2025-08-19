@@ -1,9 +1,9 @@
-const { axios } = require('../axios.js');
+const { axiosGeneric } = require('../axios.js');
 const logger = require('../../logger.js');
 
 module.exports = async () => {
 	try {
-		const res = await axios.get('https://api.sefinek.net/api/v2/filter-rules');
+		const res = await axiosGeneric.get('https://api.sefinek.net/api/v2/filter-rules');
 		const data = res.data;
 		if (!data.success || typeof data !== 'object') {
 			throw new Error(`Sefinek API error: Invalid response (success=${data.success})`);
