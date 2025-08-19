@@ -45,7 +45,7 @@ const serviceConfig = resolveServiceConfig(repoName);
 if (!serviceConfig) {
 	logger.log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
 	process.exit(1);
-} else if (SERVER_ID === 'development') {
+} else if (SERVER_ID === 'development' && process.argv.length <= 2) {
 	logger.log(`Base URL: ${serviceConfig.baseURL}`);
 	logger.log(JSON.stringify(serviceConfig.headers));
 }
