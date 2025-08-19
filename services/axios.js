@@ -16,6 +16,7 @@ const DEFAULT_HEADERS = {
 const HEADERS = {
 	json: { ...DEFAULT_HEADERS, 'Content-Type': 'application/json' },
 	form: { ...DEFAULT_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
+	multipart: { ...DEFAULT_HEADERS, 'Content-Type': 'multipart/form-data' },
 };
 
 const SERVICE_HEADERS = {
@@ -35,7 +36,7 @@ const BASE_URLS = {
 const resolveServiceConfig = str => {
 	const lower = str.toLowerCase();
 	for (const [key, baseURL] of Object.entries(BASE_URLS)) {
-		if (lower.includes(key)) return { baseURL, headers: SERVICE_HEADERS[key] };
+		if (lower.includes(key)) return { baseURL, headers: SERVICE_HEADERS[key], serviceKey: key };
 	}
 	return null;
 };
@@ -49,17 +50,16 @@ if (!serviceConfig) {
 	logger.log(JSON.stringify(serviceConfig.headers));
 }
 
+// Resolve headers for bulk (multipart + token)
+const resolveBulkHeaders = serviceKey => {
+	if (!serviceKey || !SERVICE_HEADERS[serviceKey]) return HEADERS.multipart;
+	return { ...SERVICE_HEADERS[serviceKey], 'Content-Type': 'multipart/form-data' };
+};
+
 // Axios instances
 const axiosGeneric = axios.create({ timeout: 20000, headers: DEFAULT_HEADERS });
 const axiosService = axios.create({ baseURL: serviceConfig.baseURL, timeout: 25000, headers: serviceConfig.headers });
-
-const bulkHeaders = (() => {
-	const h = { ...serviceConfig.headers };
-	delete h['Content-Type'];
-	return h;
-})();
-const axiosBulk = axios.create({ baseURL: serviceConfig.baseURL, timeout: 60000, headers: bulkHeaders });
-
+const axiosBulk = axios.create({ baseURL: serviceConfig.baseURL, timeout: 60000, headers: resolveBulkHeaders(serviceConfig.serviceKey) });
 const axiosSefinek = axios.create({ timeout: 25000, headers: SERVICE_HEADERS.sefinek });
 const axiosWebhook = axios.create({ timeout: 15000, headers: DEFAULT_HEADERS });
 const axiosCloudflare = axios.create({ baseURL: 'https://api.cloudflare.com/client/v4', timeout: 25000, headers: SERVICE_HEADERS.cloudflare });
