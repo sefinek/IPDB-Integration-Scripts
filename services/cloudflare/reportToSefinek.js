@@ -35,7 +35,7 @@ module.exports = async () => {
 
 		const base64 = Buffer.from(JSON.stringify(payload, null, 2), 'utf8').toString('base64');
 		const form = new FormData();
-		form.append('file', Buffer.from(base64, 'utf8'), {
+		form.append('file', base64, {
 			filename: 'reports.json.b64',
 			contentType: 'application/octet-stream',
 		});
