@@ -33,14 +33,15 @@ module.exports = async () => {
 			timestamp: ip.timestamp,
 		}));
 
-		const base64 = Buffer.from(JSON.stringify(payload, null, 2), 'utf8').toString('base64');
+		const base64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64');
 		const form = new FormData();
 		form.append('file', base64, {
-			filename: 'reports.json.b64',
+			filename: 'reports.dat',
 			contentType: 'application/octet-stream',
 		});
 
 		const res = await axiosSefinek.post('https://api.sefinek.net/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
+		// const res = await axiosSefinek.post('http://127.0.0.1:4010/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
 		if (res.data.success) {
 			logger.log(`Sefinek API (status: ${res.status}): Successfully sent ${uniqueLogs.length} logs`, 1);
 			await batchUpdateSefinekAPIInCSV(uniqueLogs.map(x => x.rayId));
