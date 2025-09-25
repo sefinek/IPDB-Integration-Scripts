@@ -100,7 +100,7 @@ const sendBulkReport = async () => {
 		await fs.unlink(BUFFER_FILE);
 		ABUSE_STATE.sentBulk = true;
 	} catch (err) {
-		logger.log(`Bulk upload failed! ${err.response?.data?.message ? JSON.stringify(err.response.data.message) : err.stack}`, 3, true);
+		logger.log(`Bulk upload failed! ${err.response?.data || err.stack}`, 3, true);
 	}
 };
 
