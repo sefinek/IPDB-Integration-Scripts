@@ -58,18 +58,17 @@ const loadBufferFromFile = async () => {
 const sendBulkReport = async () => {
 	if (!BULK_REPORT_BUFFER.size) return;
 
-	const records = [];
-	for (const [ip, entry] of BULK_REPORT_BUFFER.entries()) {
-		records.push([
-			ip,
-			entry.categories,
-			new Date(entry.timestamp ?? Date.now()).toISOString(),
-			entry.comment,
-		]);
-	}
+	logger.log(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`, 0, true);
 
-	try {
-		const payload = stringify(records, {
+	const records = Array.from(BULK_REPORT_BUFFER.entries(), ([ip, entry]) => [
+		ip,
+		entry.categories,
+		new Date(entry.timestamp ?? Date.now()).toISOString(),
+		entry.comment ? (entry.comment.length > 1024 ? entry.comment.substring(0, 1021) + '...' : entry.comment) : '',
+	]);
+
+	const sendChunk = async (chunk, index = 0, total = 1) => {
+		const payload = stringify(chunk, {
 			header: true,
 			columns: ['IP', 'Categories', 'ReportDate', 'Comment'],
 			quoted: true,
@@ -77,7 +76,7 @@ const sendBulkReport = async () => {
 
 		const form = new FormData();
 		form.append('csv', Buffer.from(payload), {
-			filename: 'report.csv',
+			filename: total > 1 ? `report-chunk-${index + 1}.csv` : 'report.csv',
 			contentType: 'text/csv',
 		});
 
@@ -85,22 +84,70 @@ const sendBulkReport = async () => {
 		const saved = data?.data?.savedReports ?? 0;
 		const failed = data?.data?.invalidReports?.length ?? 0;
 
-		logger.log(`Sent bulk report (${BULK_REPORT_BUFFER.size} IPs): ${saved} accepted, ${failed} rejected`, 1);
+		logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, ${failed} rejected`, 1, true);
 
 		if (failed > 0) {
+			const prefix = total > 1 ? `Chunk ${index + 1}: ` : '';
 			data.data.invalidReports.forEach(fail => {
-				logger.log(`Rejected in bulk report [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`, 2);
+				logger.log(`${prefix}Rejected [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`, 2);
 			});
 		}
+	};
 
+	const isLineLimitError = err =>
+		err.response?.status === 422 &&
+		err.response?.data?.errors?.some(e => e.detail.includes('exceeds the line limit'));
+
+	let success = false;
+
+	try {
+		await sendChunk(records);
+		success = true;
+	} catch (err) {
+		if (isLineLimitError(err)) {
+			const chunks = [];
+			const estimatedLinesPerRecord = 10; // Conservative estimate
+			const chunkSize = Math.max(1, Math.floor(9000 / estimatedLinesPerRecord));
+
+			for (let i = 0; i < records.length; i += chunkSize) {
+				chunks.push(records.slice(i, i + chunkSize));
+			}
+
+			logger.log(`File too large. Splitting ${records.length} records into ${chunks.length} chunks (~${chunkSize} records each)`, 0, true);
+
+			let allChunksSuccessful = true;
+			for (let i = 0; i < chunks.length; i++) {
+				try {
+					await sendChunk(chunks[i], i, chunks.length);
+				} catch (chunkErr) {
+					logger.log(`Chunk ${i + 1} failed: ${chunkErr.response?.data?.errors?.[0]?.detail || chunkErr.message}`, 3, true);
+					allChunksSuccessful = false;
+				}
+			}
+			success = allChunksSuccessful;
+		} else {
+			const errorMsg = err.response?.data?.errors
+				? err.response.data.errors.map(e => e.detail).join(', ')
+				: err.response?.data ? JSON.stringify(err.response.data) : err.stack;
+
+			logger.log(errorMsg, 3, true);
+		}
+	}
+
+	if (success) {
 		for (const ip of BULK_REPORT_BUFFER.keys()) markIPAsReported(ip);
 		await saveReportedIPs();
 		BULK_REPORT_BUFFER.clear();
 
-		await fs.unlink(BUFFER_FILE);
+		try {
+			await fs.unlink(BUFFER_FILE);
+		} catch {
+			// . . .
+		}
+
 		ABUSE_STATE.sentBulk = true;
-	} catch (err) {
-		logger.log(`Bulk upload failed! ${err.response?.data || err.stack}`, 3, true);
+	} else {
+		logger.log('Bulk upload failed, keeping buffer file for retry', 3, true);
 	}
 };
 
@@ -110,3 +157,17 @@ module.exports = Object.freeze({
 	sendBulkReport,
 	BULK_REPORT_BUFFER,
 });
+
+if (require.main === module) {
+	(async () => {
+		try {
+			await loadBufferFromFile();
+
+			if (!BULK_REPORT_BUFFER.size) return logger.log('No data found in bulk-report-buffer.csv', 2);
+
+			await sendBulkReport();
+		} catch (err) {
+			logger.log(`Bulk report failed: ${err.message}`, 3);
+		}
+	})();
+}
