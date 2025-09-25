@@ -12,6 +12,7 @@ const logger = require('../logger.js');
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
 const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
+const OFFLINE_MODE = false;
 
 const ensureDirectoryExists = async filePath => {
 	try {
@@ -74,6 +75,33 @@ const sendBulkReport = async () => {
 			quoted: true,
 		});
 
+		const lines = payload.split('\n').length;
+		logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : ''}Generated CSV with ${chunk.length} records, ${lines} lines`, 1);
+
+		if (OFFLINE_MODE) {
+			if (lines > 10000) {
+				const error = new Error('Line limit exceeded');
+				error.response = {
+					status: 422,
+					data: { errors: [{ detail: `File uploaded has ${lines} lines which exceeds the line limit of 10,000 lines.`, status: 422 }] },
+				};
+				throw error;
+			}
+
+			const saved = chunk.length;
+			logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, 0 rejected [OFFLINE]`, 1, true);
+			return;
+		}
+
+		if (lines > 10000) {
+			const error = new Error('Line limit exceeded');
+			error.response = {
+				status: 422,
+				data: { errors: [{ detail: `File uploaded has ${lines} lines which exceeds the line limit of 10,000 lines.`, status: 422 }] },
+			};
+			throw error;
+		}
+
 		const form = new FormData();
 		form.append('csv', Buffer.from(payload), {
 			filename: total > 1 ? `report-chunk-${index + 1}.csv` : 'report.csv',
@@ -106,7 +134,7 @@ const sendBulkReport = async () => {
 	} catch (err) {
 		if (isLineLimitError(err)) {
 			const chunks = [];
-			const estimatedLinesPerRecord = 10; // Conservative estimate
+			const estimatedLinesPerRecord = 10;
 			const chunkSize = Math.max(1, Math.floor(9000 / estimatedLinesPerRecord));
 
 			for (let i = 0; i < records.length; i += chunkSize) {
@@ -164,6 +192,16 @@ if (require.main === module) {
 			await loadBufferFromFile();
 
 			if (!BULK_REPORT_BUFFER.size) return logger.log('No data found in bulk-report-buffer.csv', 2);
+
+			for (let i = 0; i < 10000; i++) {
+				BULK_REPORT_BUFFER.set(`192.168.1.${i % 255}`, {
+					categories: '14',
+					timestamp: Date.now(),
+					comment: `Test comment ${i}\nMultiline content\nMore lines here\nEven more content\nLots of text to make it multiline\nAnd more\nAnd more lines\nTo simulate real comments`,
+				});
+			}
+
+			logger.log(`Artificially added test records. Total: ${BULK_REPORT_BUFFER.size} IPs`, 1);
 
 			await sendBulkReport();
 		} catch (err) {
