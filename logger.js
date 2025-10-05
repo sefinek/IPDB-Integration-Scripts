@@ -1,4 +1,5 @@
 const { reset, IS_PM2 } = require('./banners/utils/helper.js');
+const discordWebhooks = require('./services/discordWebhooks.js');
 
 const LEVELS = {
 	0: { method: 'log', label: '[i]', color: '\x1b[38;5;38m', hex: 0x00AEEF },
@@ -13,9 +14,9 @@ class Logger {
 		console[method](IS_PM2 ? `${label} ${msg}` : `${lvlColor}${label} ${msg}${reset}`);
 	}
 
-	static async webhook(msg, level) {
+	static async webhook(msg, level, pingUser = false) {
 		const { hex } = LEVELS[level] || LEVELS[0];
-		await require('./services/discordWebhooks.js')(msg, hex);
+		await discordWebhooks(msg, hex, pingUser);
 	}
 
 	static log(msg, level = 0, forceDiscord = false) {
