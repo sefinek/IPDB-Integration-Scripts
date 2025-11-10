@@ -22,13 +22,26 @@ const pull = async () => {
 		}
 
 		logger.log('Pulling the repository and the required submodule...');
+
+		// Get submodule status before update
+		const submoduleBefore = await git.raw(['submodule', 'status']);
+
+		// Pull main repo and update submodules
 		const pullResult = await git.pull();
 		await git.submoduleUpdate(['--init', '--recursive', '--remote', '--merge']);
 
+		// Get submodule status after update
+		const submoduleAfter = await git.raw(['submodule', 'status']);
+		const submoduleChanged = submoduleBefore !== submoduleAfter;
+
 		const { changes, insertions, deletions } = pullResult.summary;
-		const hasChanges = changes > 0 || insertions > 0 || deletions > 0;
+		const mainRepoChanged = changes > 0 || insertions > 0 || deletions > 0;
+		const hasChanges = mainRepoChanged || submoduleChanged;
 		if (hasChanges) {
-			logger.log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
+			const parts = [];
+			if (mainRepoChanged) parts.push(`Main repo - Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions};`);
+			if (submoduleChanged) parts.push('Submodule updated.');
+			logger.log(`Updates pulled successfully. ${parts.join(' ')}`, 0, true);
 		} else {
 			logger.log('No new updates detected', 1);
 		}
