@@ -18,7 +18,7 @@ const fetchCloudflareEvents = async () => {
 
 	for (const zoneId of zoneIds) {
 		try {
-			const { data, status } = await axiosCloudflare.post('/graphql', PAYLOAD(10000, zoneId));
+			const { data, status } = await axiosCloudflare.post('/graphql', PAYLOAD(zoneId));
 
 			const events = data?.data?.viewer?.zones?.[0]?.firewallEventsAdaptive;
 			if (!events) throw new Error(`Failed to retrieve data from Cloudflare (status ${status}): ${JSON.stringify(data?.errors)}`);

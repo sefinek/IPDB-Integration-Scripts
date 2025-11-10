@@ -1,10 +1,12 @@
-module.exports = (limit, zoneTag) => {
+const { MAIN } = require('../../../config.js');
+
+module.exports = zoneTag => {
 	if (!zoneTag) throw new Error('zoneTag is null or undefined');
 
 	const variables = {
 		zoneTag,
 		filter: {
-			datetime_geq: new Date(Date.now() - (60 * 60 * 12 * 1000)).toISOString(),
+			datetime_geq: new Date(Date.now() - MAIN.CLOUDFLARE_TIME_RANGE || 24 * 60 * 60 * 1000).toISOString(),
 			AND: [
 				{ action_neq: 'allow' },
 				{ action_neq: 'skip' },
@@ -28,7 +30,7 @@ query ListFirewallEvents($zoneTag: string, $filter: FirewallEventsAdaptiveFilter
     zones(filter: { zoneTag: $zoneTag }) {
       firewallEventsAdaptive(
         filter: $filter,
-        limit: ${limit},
+        limit: ${MAIN.CLOUDFLARE_EVENTS_LIMIT || 3000},
         orderBy: [datetime_DESC]
       ) {
         action
