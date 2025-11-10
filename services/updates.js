@@ -21,17 +21,19 @@ const pull = async () => {
 			await git.reset(['--hard']);
 		}
 
-		logger.log('Pulling the repository and the required submodule...');
-		const { summary } = await git.pull(['--recurse-submodules']);
+		if (EXTENDED_LOGS) logger.log('Pulling the repository and the required submodule...');
+		const pullResult = await git.pull();
+		await git.submoduleUpdate(['--init', '--recursive', '--remote', '--merge']);
 
-		const { changes, insertions, deletions } = summary;
-		if (changes > 0 || insertions > 0 || deletions > 0) {
+		const { changes, insertions, deletions } = pullResult.summary;
+		const hasChanges = changes > 0 || insertions > 0 || deletions > 0;
+		if (hasChanges) {
 			logger.log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
-			return true;
+		} else if (EXTENDED_LOGS) {
+			logger.log('No new updates detected', 1);
 		}
 
-		logger.log('No new updates detected', 1);
-		return false;
+		return hasChanges;
 	} catch (err) {
 		logger.log(err.stack, 3);
 		return null;
