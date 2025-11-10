@@ -21,7 +21,7 @@ const pull = async () => {
 			await git.reset(['--hard']);
 		}
 
-		if (EXTENDED_LOGS) logger.log('Pulling the repository and the required submodule...');
+		logger.log('Pulling the repository and the required submodule...');
 		const pullResult = await git.pull();
 		await git.submoduleUpdate(['--init', '--recursive', '--remote', '--merge']);
 
@@ -29,7 +29,7 @@ const pull = async () => {
 		const hasChanges = changes > 0 || insertions > 0 || deletions > 0;
 		if (hasChanges) {
 			logger.log(`Updates pulled successfully. Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions}`, 0, true);
-		} else if (EXTENDED_LOGS) {
+		} else {
 			logger.log('No new updates detected', 1);
 		}
 
