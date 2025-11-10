@@ -6,7 +6,7 @@ module.exports = zoneTag => {
 	const variables = {
 		zoneTag,
 		filter: {
-			datetime_geq: new Date(Date.now() - MAIN.CLOUDFLARE_TIME_RANGE || 24 * 60 * 60 * 1000).toISOString(),
+			datetime_geq: new Date(Date.now() - MAIN.CLOUDFLARE_TIME_RANGE || (24 * 60 * 60 - 60) * 1000).toISOString(),
 			AND: [
 				{ action_neq: 'allow' },
 				{ action_neq: 'skip' },
