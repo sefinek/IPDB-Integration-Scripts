@@ -41,7 +41,7 @@ const pull = async () => {
 			const parts = [];
 			if (mainRepoChanged) parts.push(`Main repo - Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions};`);
 			if (submoduleChanged) parts.push('Submodule updated.');
-			logger.log(`Updates pulled successfully. ${parts.join(' ')}`, 0, true);
+			logger.log(`Updates pulled successfully! ${parts.join(' ')}`, 0, true);
 		} else {
 			logger.log('No new updates detected', 1);
 		}
