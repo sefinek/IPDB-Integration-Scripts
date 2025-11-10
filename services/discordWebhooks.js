@@ -1,14 +1,15 @@
 const { axiosWebhook } = require('./axios.js');
 const { version, repoSlug } = require('../repo.js');
-const { SERVER_ID, DISCORD_WEBHOOK_ENABLED, DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_USERNAME } = require('../../config.js').MAIN;
+const { SERVER_ID, DISCORD_WEBHOOK_ENABLED, DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_USERNAME, DISCORD_USER_ID } = require('../../config.js').MAIN;
 const username = DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || null;
 
-module.exports = async (msg, hex) => {
+module.exports = async (msg, hex, pingUser = false) => {
 	if (!msg || !DISCORD_WEBHOOK_ENABLED || !DISCORD_WEBHOOK_URL || SERVER_ID === 'development') return;
 
 	try {
 		const res = await axiosWebhook.post(DISCORD_WEBHOOK_URL, {
 			username,
+			content: (pingUser && DISCORD_USER_ID) ? `<@${DISCORD_USER_ID}>` : undefined,
 			embeds: [{
 				description: msg
 					.replace(/(\b\w+=)/g, '**$1**')
