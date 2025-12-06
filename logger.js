@@ -22,7 +22,7 @@ class Logger {
 	static print(msg, level = 0) {
 		const { method, label, color: lvlColor } = this.#getLevel(level);
 		if (IS_PM2) {
-			console[method](`${label}${msg}`);
+			console[method](`${label} ${msg}`);
 		} else {
 			console[method](`${lvlColor}${label} ${msg}${reset}`);
 		}
