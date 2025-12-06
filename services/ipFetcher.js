@@ -1,5 +1,3 @@
-'use strict';
-
 const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');

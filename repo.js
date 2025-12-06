@@ -1,5 +1,3 @@
-'use strict';
-
 const { version, author: authorMeta, repository, license } = require('../package.json');
 
 const githubRepoRegex = /github\.com[:/]+([^/]+)\/([^/#.]+)(?:\.git)?/;

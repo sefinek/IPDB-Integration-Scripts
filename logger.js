@@ -61,10 +61,7 @@ class Logger {
 		const isLevel = typeof levelOrHex === 'number' && levelOrHex >= 0 && levelOrHex <= 3;
 		const hex = isLevel ? this.#getLevel(levelOrHex).hex : levelOrHex;
 		const now = Date.now();
-
-		if (now - webhookLastSent > WEBHOOK_COOLDOWN) {
-			webhookBurstCount = 0;
-		}
+		if (now - webhookLastSent > WEBHOOK_COOLDOWN) webhookBurstCount = 0;
 
 		if (webhookBurstCount >= WEBHOOK_BURST_LIMIT) {
 			webhookQueue.push({ msg, hex, pingUser });
