@@ -1,14 +1,14 @@
 const fs = require('node:fs');
-const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const ipSanitizer = require('../ipSanitizer.js');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
+const resolvePath = require('../pathResolver.js');
 const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 
-const LOG_FILE = path.resolve(COWRIE_LOG_FILE);
+const LOG_FILE = resolvePath(COWRIE_LOG_FILE);
 const REPORT_DELAY = SERVER_ID === 'development' ? 30 * 1000 : 10 * 60 * 1000;
 
 const CREDS_LIMIT = 900;
