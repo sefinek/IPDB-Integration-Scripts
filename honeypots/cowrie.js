@@ -11,7 +11,7 @@ const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 const LOG_FILE = resolvePath(COWRIE_LOG_FILE);
 const REPORT_DELAY = SERVER_ID === 'development' ? 30 * 1000 : 10 * 60 * 1000;
 
-const CREDS_LIMIT = 900;
+const CREDS_LIMIT = 885;
 const ipBuffers = new Map();
 
 const extractSessionData = sessions => {
