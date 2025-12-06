@@ -1,5 +1,3 @@
-'use strict';
-
 const FormData = require('form-data');
 const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');

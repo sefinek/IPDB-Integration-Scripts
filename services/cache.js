@@ -1,5 +1,3 @@
-'use strict';
-
 const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
 const resolvePath = require('../pathResolver.js');

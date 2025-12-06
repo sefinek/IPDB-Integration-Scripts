@@ -1,5 +1,3 @@
-'use strict';
-
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');

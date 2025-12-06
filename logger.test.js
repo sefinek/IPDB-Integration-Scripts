@@ -1,0 +1,29 @@
+const logger = require('./logger.js');
+
+console.log('=== Testing Logger Rate Limiting ===\n');
+
+// Test 1: Basic logging with timestamps
+console.log('Test 1: Basic logging');
+logger.info('This is info message');
+logger.success('This is success message');
+logger.warn('This is warning message');
+logger.error('This is error message');
+
+console.log('\n--- Waiting 1 second ---\n');
+
+setTimeout(() => {
+	console.log('Test 2: Webhook queue (simulated)');
+
+	// Simulate rapid webhook calls
+	for (let i = 1; i <= 10; i++) {
+		logger.webhook(`Test webhook ${i}`, 0, false).catch(() => {});
+	}
+
+	console.log(`\nWebhook queue size: ${logger.getWebhookQueueSize()}`);
+
+	setTimeout(() => {
+		console.log(`\nAfter 6 seconds, queue size: ${logger.getWebhookQueueSize()}`);
+		console.log('\n✓ All tests completed!');
+		process.exit(0);
+	}, 6000);
+}, 1000);

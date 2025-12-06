@@ -1,5 +1,3 @@
-'use strict';
-
 const gradientText = require('./gradientText.js');
 
 const IS_PM2 = 'pm_id' in process.env;
