@@ -9,6 +9,7 @@ const { axiosBulk } = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const logger = require('../logger.js');
 
+const MAX_BULK_BUFFER = 10000;
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
 const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
@@ -185,28 +186,5 @@ module.exports = Object.freeze({
 	loadBufferFromFile,
 	sendBulkReport,
 	BULK_REPORT_BUFFER,
+	MAX_BULK_BUFFER,
 });
-
-if (require.main === module) {
-	(async () => {
-		try {
-			await loadBufferFromFile();
-
-			if (!BULK_REPORT_BUFFER.size) return logger.log('No data found in bulk-report-buffer.csv', 2);
-
-			for (let i = 0; i < 10000; i++) {
-				BULK_REPORT_BUFFER.set(`192.168.1.${i % 255}`, {
-					categories: '14',
-					timestamp: Date.now(),
-					comment: `Test comment ${i}\nMultiline content\nMore lines here\nEven more content\nLots of text to make it multiline\nAnd more\nAnd more lines\nTo simulate real comments`,
-				});
-			}
-
-			logger.log(`Artificially added test records. Total: ${BULK_REPORT_BUFFER.size} IPs`, 1);
-
-			await sendBulkReport();
-		} catch (err) {
-			logger.log(`Bulk report failed: ${err.message}`, 3);
-		}
-	})();
-}
