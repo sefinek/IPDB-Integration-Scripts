@@ -63,7 +63,11 @@ const saveReportedIPs = async () => {
 
 const isIPReportedRecently = ip => {
 	const reportedTime = reportedIPs.get(ip);
-	return reportedTime && (Date.now() / 1000 - reportedTime < IP_REPORT_COOLDOWN / 1000);
+	if (!reportedTime) return false;
+
+	const IP_REPORT_COOLDOWN_SECONDS = IP_REPORT_COOLDOWN / 1000;
+	const currentTimeSeconds = Math.floor(Date.now() / 1000);
+	return (currentTimeSeconds - reportedTime < IP_REPORT_COOLDOWN_SECONDS);
 };
 
 const markIPAsReported = ip => reportedIPs.set(ip, Math.floor(Date.now() / 1000));

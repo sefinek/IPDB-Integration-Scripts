@@ -169,8 +169,11 @@ const sendBulkReport = async () => {
 
 		try {
 			await fs.unlink(BUFFER_FILE);
-		} catch {
-			// . . .
+		} catch (err) {
+			// Ignore file deletion errors - file may not exist or already deleted
+			if (err.code !== 'ENOENT') {
+				logger.log(`Failed to delete buffer file: ${err.message}`, 2);
+			}
 		}
 
 		ABUSE_STATE.sentBulk = true;

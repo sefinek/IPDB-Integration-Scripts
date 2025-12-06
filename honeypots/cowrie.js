@@ -255,7 +255,7 @@ module.exports = reportIp => {
 		});
 
 	// Clean buffer
-	setInterval(() => {
+	const cleanupInterval = setInterval(() => {
 		const now = Date.now();
 		for (const [ip, buffer] of ipBuffers.entries()) {
 			if (now - buffer.lastSeen > 30 * 60 * 1000) {
@@ -267,5 +267,19 @@ module.exports = reportIp => {
 	}, 15 * 60 * 1000);
 
 	logger.log('🛡️ COWRIE » Watcher initialized', 1);
-	return { tail, flush: () => flushBuffer(null, reportIp) };
+	return {
+		tail,
+		flush: async () => {
+			for (const ip of ipBuffers.keys()) {
+				await flushBuffer(ip, reportIp);
+			}
+		},
+		cleanup: () => {
+			clearInterval(cleanupInterval);
+			for (const buffer of ipBuffers.values()) {
+				clearTimeout(buffer.timer);
+			}
+			ipBuffers.clear();
+		},
+	};
 };

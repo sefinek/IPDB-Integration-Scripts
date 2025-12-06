@@ -106,5 +106,11 @@ module.exports = reportIp => {
 		});
 
 	logger.log('🛡️ DIONAEA » Watcher initialized', 1);
-	return { tail, flush: () => null };
+	return {
+		tail,
+		flush: () => null,
+		cleanup: () => {
+			// No intervals to clean, but included for consistency
+		},
+	};
 };
