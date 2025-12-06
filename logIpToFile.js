@@ -1,9 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const logger = require('../scripts/logger.js');
+const resolvePath = require('./pathResolver.js');
 const { LOG_IP_HISTORY_ENABLED, LOG_IP_HISTORY_DIR } = require('../config.js').MAIN;
 
-const BASE_DIR = path.resolve(LOG_IP_HISTORY_DIR);
+const BASE_DIR = resolvePath(LOG_IP_HISTORY_DIR);
 
 module.exports = (ip, metadata = {}) => {
 	if (!LOG_IP_HISTORY_ENABLED || !ip) return;
