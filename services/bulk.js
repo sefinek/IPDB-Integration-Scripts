@@ -7,7 +7,6 @@ const { axiosBulk } = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const logger = require('../logger.js');
 
-const MAX_BULK_BUFFER = 10000;
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
 const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
@@ -184,5 +183,4 @@ module.exports = Object.freeze({
 	loadBufferFromFile,
 	sendBulkReport,
 	BULK_REPORT_BUFFER,
-	MAX_BULK_BUFFER,
 });
