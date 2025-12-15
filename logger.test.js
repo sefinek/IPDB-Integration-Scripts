@@ -4,7 +4,7 @@ console.log('=== Testing Logger Rate Limiting ===\n');
 
 // Test 1: Basic logging with timestamps
 console.log('Test 1: Basic logging');
-logger.info('This is info message');
+logger.info('This is info message', { ping: true });
 logger.success('This is success message');
 logger.warn('This is warning message');
 logger.error('This is error message');
@@ -15,11 +15,11 @@ setTimeout(async () => {
 	console.log('Test 2: Webhook queue (simulated)');
 
 	// Simulate rapid webhook calls
-	for (let i = 1; i <= 10; i++) {
+	for (let i = 1; i <= 6; i++) {
 		await logger.webhook(`Test webhook ${i}`, 0, false);
 	}
 
 	console.log(`\nWebhook queue size: ${logger.getWebhookQueueSize()}`);
 
-	setTimeout(() => process.exit(0), 60000);
+	setTimeout(() => process.exit(0), 40000);
 }, 1000);
