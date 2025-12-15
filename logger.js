@@ -10,7 +10,7 @@ const LEVELS = Object.freeze({
 	3: { method: 'error', label: '[X]', color: '\x1b[38;5;160m', hex: 0xD32F2F, name: 'ERROR' },
 });
 
-const WEBHOOK_BURST_LIMIT = 3, WEBHOOK_COOLDOWN = 4000;
+const WEBHOOK_BURST_LIMIT = 2, WEBHOOK_COOLDOWN = 5000;
 const webhookQueue = [];
 let webhookBurstCount = 0, webhookLastSent = 0;
 
@@ -74,9 +74,7 @@ class Logger {
 			webhookLastSent = now;
 			webhookBurstCount++;
 
-			if (webhookQueue.length > 0) {
-				setTimeout(() => this.#processWebhookQueue(), WEBHOOK_COOLDOWN);
-			}
+			if (webhookQueue.length > 0) setTimeout(() => this.#processWebhookQueue(), WEBHOOK_COOLDOWN);
 		} catch (err) {
 			this.print(`Discord webhook delivery failed: ${err.message}`, 3);
 		}
@@ -95,19 +93,13 @@ class Logger {
 			this.print(`Queued webhook failed: ${err.message}`, 3);
 		}
 
-		if (webhookQueue.length > 0) {
-			setTimeout(() => this.#processWebhookQueue(), WEBHOOK_COOLDOWN);
-		}
+		if (webhookQueue.length > 0) setTimeout(() => this.#processWebhookQueue(), WEBHOOK_COOLDOWN);
 	}
 
 	static log(msg, level = 0, forceDiscord = false) {
 		this.print(msg, level);
 
-		if (forceDiscord || level >= 2) {
-			this.webhook(msg, level).catch(err => {
-				console.error('[Logger] Webhook error:', err.message);
-			});
-		}
+		if (forceDiscord || level >= 2) this.webhook(msg, level).catch(err => console.error('[Logger] Webhook error:', err.message));
 	}
 
 	static info(msg, sendToDiscord = false) {
