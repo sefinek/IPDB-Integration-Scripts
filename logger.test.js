@@ -11,19 +11,15 @@ logger.error('This is error message');
 
 console.log('\n--- Waiting 1 second ---\n');
 
-setTimeout(() => {
+setTimeout(async () => {
 	console.log('Test 2: Webhook queue (simulated)');
 
 	// Simulate rapid webhook calls
 	for (let i = 1; i <= 10; i++) {
-		logger.webhook(`Test webhook ${i}`, 0, false).catch(() => {});
+		await logger.webhook(`Test webhook ${i}`, 0, false);
 	}
 
 	console.log(`\nWebhook queue size: ${logger.getWebhookQueueSize()}`);
 
-	setTimeout(() => {
-		console.log(`\nAfter 6 seconds, queue size: ${logger.getWebhookQueueSize()}`);
-		console.log('\n✓ All tests completed!');
-		process.exit(0);
-	}, 6000);
+	setTimeout(() => process.exit(0), 60000);
 }, 1000);
