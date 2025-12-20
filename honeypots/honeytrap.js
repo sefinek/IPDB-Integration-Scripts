@@ -1,14 +1,14 @@
 const fs = require('node:fs');
-const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const ipSanitizer = require('../ipSanitizer.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
+const resolvePath = require('../pathResolver.js');
 const { HONEYTRAP_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 const { FLAGS, createFlagCollection } = require('../flags.js');
 
-const LOG_FILE = path.resolve(HONEYTRAP_LOG_FILE);
+const LOG_FILE = resolvePath(HONEYTRAP_LOG_FILE);
 const HEADER_PRIORITY = ['user-agent', 'accept', 'accept-language', 'accept-encoding'];
 
 let lastFlushTime = Date.now();
@@ -174,7 +174,7 @@ module.exports = reportIp => {
 		});
 
 	// Clean buffer
-	setInterval(async () => {
+	const cleanupInterval = setInterval(async () => {
 		if (Date.now() >= lastFlushTime + 5 * 60 * 1000) {
 			await flushBuffer(reportIp);
 			lastFlushTime = Date.now();
@@ -182,5 +182,12 @@ module.exports = reportIp => {
 	}, 60 * 1000);
 
 	logger.log('🛡️ HONEYTRAP » Watcher initialized', 1);
-	return { tail, flush: () => flushBuffer(reportIp) };
+	return {
+		tail,
+		flush: () => flushBuffer(reportIp),
+		cleanup: () => {
+			clearInterval(cleanupInterval);
+			attackBuffer.clear();
+		},
+	};
 };

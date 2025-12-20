@@ -1,7 +1,10 @@
 const { CronJob } = require('cron');
 const fs = require('node:fs/promises');
 const logger = require('../logger.js');
+const resolvePath = require('../pathResolver.js');
 const { SERVER_ID, EXTENDED_LOGS, CACHE_FILE } = require('../../config.js').MAIN;
+
+const RESOLVED_CACHE_FILE = resolvePath(CACHE_FILE);
 
 const pad = n => n.toString().padStart(2, '0');
 const formatHourRange = h => `${pad(h)}:00-${pad(h)}:59`;
@@ -27,9 +30,9 @@ const summaryEmbed = async () => {
 		data = entries.join('\n');
 	} else {
 		try {
-			await fs.access(CACHE_FILE);
-			data = (await fs.readFile(CACHE_FILE, 'utf8')).trim();
-			if (!data) return logger.log(`Daily summary » Cache file exists but is empty: ${CACHE_FILE}`, 2);
+			await fs.access(RESOLVED_CACHE_FILE);
+			data = (await fs.readFile(RESOLVED_CACHE_FILE, 'utf8')).trim();
+			if (!data) return logger.log(`Daily summary » Cache file exists but is empty: ${RESOLVED_CACHE_FILE}`, 2);
 		} catch (err) {
 			return logger.log(`Daily summary » Failed to access/read cache file: ${err.message}`, 2);
 		}

@@ -1,17 +1,17 @@
 const fs = require('node:fs');
-const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const ipSanitizer = require('../ipSanitizer.js');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
+const resolvePath = require('../pathResolver.js');
 const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 
-const LOG_FILE = path.resolve(COWRIE_LOG_FILE);
+const LOG_FILE = resolvePath(COWRIE_LOG_FILE);
 const REPORT_DELAY = SERVER_ID === 'development' ? 30 * 1000 : 10 * 60 * 1000;
 
-const CREDS_LIMIT = 900;
+const CREDS_LIMIT = 885;
 const ipBuffers = new Map();
 
 const extractSessionData = sessions => {
@@ -255,7 +255,7 @@ module.exports = reportIp => {
 		});
 
 	// Clean buffer
-	setInterval(() => {
+	const cleanupInterval = setInterval(() => {
 		const now = Date.now();
 		for (const [ip, buffer] of ipBuffers.entries()) {
 			if (now - buffer.lastSeen > 30 * 60 * 1000) {
@@ -267,5 +267,19 @@ module.exports = reportIp => {
 	}, 15 * 60 * 1000);
 
 	logger.log('🛡️ COWRIE » Watcher initialized', 1);
-	return { tail, flush: () => flushBuffer(null, reportIp) };
+	return {
+		tail,
+		flush: async () => {
+			for (const ip of ipBuffers.keys()) {
+				await flushBuffer(ip, reportIp);
+			}
+		},
+		cleanup: () => {
+			clearInterval(cleanupInterval);
+			for (const buffer of ipBuffers.values()) {
+				clearTimeout(buffer.timer);
+			}
+			ipBuffers.clear();
+		},
+	};
 };

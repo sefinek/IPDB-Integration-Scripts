@@ -1,10 +1,8 @@
-'use strict';
-
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
 const logger = require('../logger.js');
-const { SERVER_ID, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
+const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
 
 const DEFAULT_HEADERS = {
 	'User-Agent': `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoUrl})`,
@@ -45,7 +43,7 @@ const serviceConfig = resolveServiceConfig(repoName);
 if (!serviceConfig) {
 	logger.log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
 	process.exit(1);
-} else if (SERVER_ID === 'development' && process.argv.length <= 2) {
+} else if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
 	logger.log(`Base URL: ${serviceConfig.baseURL}`);
 	logger.log(JSON.stringify(serviceConfig.headers));
 }
