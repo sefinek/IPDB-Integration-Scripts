@@ -1,13 +1,13 @@
 const fs = require('node:fs');
-const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
+const resolvePath = require('../pathResolver.js');
 const { DIONAEA_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 
-const LOG_FILE = path.resolve(DIONAEA_LOG_FILE);
+const LOG_FILE = resolvePath(DIONAEA_LOG_FILE);
 
 const getReportDetails = (entry, dpt) => {
 	const proto = entry?.connection?.protocol || 'unknown';
@@ -106,5 +106,11 @@ module.exports = reportIp => {
 		});
 
 	logger.log('🛡️ DIONAEA » Watcher initialized', 1);
-	return { tail, flush: () => null };
+	return {
+		tail,
+		flush: () => null,
+		cleanup: () => {
+			// No intervals to clean, but included for consistency
+		},
+	};
 };

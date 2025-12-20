@@ -2,8 +2,10 @@ const { exec } = require('node:child_process');
 const ecosystem = require('../../ecosystem.config.js');
 const logger = require('../logger.js');
 
+const EXEC_TIMEOUT = 60000;
+
 const executeCmd = cmd => new Promise((resolve, reject) => {
-	exec(cmd, (err, stdout, stderr) => {
+	exec(cmd, { timeout: EXEC_TIMEOUT }, (err, stdout, stderr) => {
 		if (err) {
 			logger.log(`Error executing command: ${cmd}\n${err}`, 3);
 			return reject(err);

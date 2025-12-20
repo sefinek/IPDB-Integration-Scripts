@@ -1,5 +1,3 @@
-'use strict';
-
 const { version, author: authorMeta, repository, license } = require('../package.json');
 
 const githubRepoRegex = /github\.com[:/]+([^/]+)\/([^/#.]+)(?:\.git)?/;
@@ -14,13 +12,15 @@ const nameMappings = {
 	spamverify: 'SpamVerify',
 };
 
-const getPrettyName = repo =>
-	Object.entries(nameMappings)
+const getPrettyName = repo => {
+	const repoLower = repo.toLowerCase();
+	return Object.entries(nameMappings)
 		.reduce((best, [key, value]) =>
-			repo.toLowerCase().includes(key.toLowerCase()) && key.length > best.key.length
+			repoLower.includes(key.toLowerCase()) && key.length > best.key.length
 				? { key, value }
 				: best,
 		{ key: '', value: repo }).value;
+};
 
 module.exports = Object.freeze({
 	version,

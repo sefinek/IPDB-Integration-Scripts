@@ -1,5 +1,3 @@
-'use strict';
-
 const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
@@ -10,6 +8,7 @@ const { IP_ASSIGNMENT, IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../conf
 
 const ipAddresses = new Set();
 let ipv6ErrorCount = 0, ipv6ErrorLogged = false;
+let isRefreshing = false;
 
 const fetchLocalIPs = () => {
 	for (const ifaceList of Object.values(networkInterfaces())) {
@@ -58,12 +57,20 @@ const fetchIPAddress = async (family, attempt = 1) => {
 };
 
 const refreshServerIPs = async () => {
+	if (isRefreshing) {
+		logger.log('IP refresh already in progress, skipping...', 1);
+		return;
+	}
+
+	isRefreshing = true;
 	logger.log('Trying to fetch your IPv4 and IPv6 address from api.sefinek.net...');
 
 	try {
 		await Promise.all([fetchIPAddress(0), fetchIPAddress(4), fetchIPAddress(6)]);
 	} catch (err) {
 		logger.log(`Failed to refresh IP addresses: ${err.message}`, 3);
+	} finally {
+		isRefreshing = false;
 	}
 };
 

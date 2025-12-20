@@ -1,5 +1,3 @@
-'use strict';
-
 const FormData = require('form-data');
 const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
@@ -169,8 +167,9 @@ const sendBulkReport = async () => {
 
 		try {
 			await fs.unlink(BUFFER_FILE);
-		} catch {
-			// . . .
+		} catch (err) {
+			// Ignore file deletion errors - file may not exist or already deleted
+			if (err.code !== 'ENOENT') logger.log(`Failed to delete buffer file: ${err.message}`, 2);
 		}
 
 		ABUSE_STATE.sentBulk = true;
@@ -185,27 +184,3 @@ module.exports = Object.freeze({
 	sendBulkReport,
 	BULK_REPORT_BUFFER,
 });
-
-if (require.main === module) {
-	(async () => {
-		try {
-			await loadBufferFromFile();
-
-			if (!BULK_REPORT_BUFFER.size) return logger.log('No data found in bulk-report-buffer.csv', 2);
-
-			for (let i = 0; i < 10000; i++) {
-				BULK_REPORT_BUFFER.set(`192.168.1.${i % 255}`, {
-					categories: '14',
-					timestamp: Date.now(),
-					comment: `Test comment ${i}\nMultiline content\nMore lines here\nEven more content\nLots of text to make it multiline\nAnd more\nAnd more lines\nTo simulate real comments`,
-				});
-			}
-
-			logger.log(`Artificially added test records. Total: ${BULK_REPORT_BUFFER.size} IPs`, 1);
-
-			await sendBulkReport();
-		} catch (err) {
-			logger.log(`Bulk report failed: ${err.message}`, 3);
-		}
-	})();
-}
