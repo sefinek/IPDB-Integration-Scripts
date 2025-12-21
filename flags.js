@@ -40,6 +40,7 @@ const { prettyName } = require('./repo.js');
  *   | 'SPOOFING'
  *   | 'WEB_APP_ATTACK'
  *   | 'IOT_TARGETED'
+ *   | 'IGNORING_ROBOTS_TXT'
  * } Flag
  */
 
@@ -83,6 +84,7 @@ const FLAGS = Object.freeze({
 	SPOOFING: 'SPOOFING',
 	WEB_APP_ATTACK: 'WEB_APP_ATTACK',
 	IOT_TARGETED: 'IOT_TARGETED',
+	IGNORING_ROBOTS_TXT: 'IGNORING_ROBOTS_TXT',
 });
 
 const MAPPINGS = Object.freeze({
@@ -140,17 +142,44 @@ const MAPPINGS = Object.freeze({
 		['SSH', 22],
 		['IOT_TARGETED', 23],
 	]),
+	SpamVerify: new Map([
+		['DNS_COMPROMISE', 1],
+		['DNS_POISONING', 2],
+		['FRAUD_ORDERS', 3],
+		['DDOS_ATTACK', 4],
+		['OPEN_PROXY', 5],
+		['WEB_SPAM', 6],
+		['EMAIL_SPAM', 7],
+		['PORT_SCAN', 8],
+		['SPOOFING', 9],
+		['BRUTE_FORCE', 10],
+		['BAD_WEB_BOT', 11],
+		['EXPLOITED_HOST', 12],
+		['WEB_APP_ATTACK', 13],
+		['SSH', 14],
+		['IOT_TARGETED', 15],
+		['FTP', 16],
+		['PING_OF_DEATH', 17],
+		['PHISHING', 18],
+		['FRAUD_VOIP', 19],
+		['BLOG_SPAM', 20],
+		['VPN_IP', 21],
+		['HACKING', 22],
+		['SQL_INJECTION', 23],
+		['IGNORING_ROBOTS_TXT', 24],
+	]),
 });
+
+const FALLBACK_IDS = {
+	SniffCat: MAPPINGS.SniffCat.get(FLAGS.OTHER_ABUSE),
+	AbuseIPDB: MAPPINGS.AbuseIPDB.get(FLAGS.HACKING),
+	SpamVerify: MAPPINGS.SpamVerify.get(FLAGS.HACKING),
+};
 
 const createFlagCollection = () => {
 	const flags = new Set();
 
 	const list = () => Array.from(flags);
-
-	const FALLBACK_IDS = {
-		SniffCat: 27,
-		AbuseIPDB: 15,
-	};
 
 	const toIDs = (integration = prettyName) => {
 		const map = MAPPINGS[integration];
@@ -171,8 +200,6 @@ const createFlagCollection = () => {
 		return ids.length > 0 ? ids : [fallbackID];
 	};
 
-	const toString = (integration = prettyName) => toIDs(integration).join(',');
-
 	const api = {
 		add: /** @param {...Flag} items */ (...items) => {
 			for (const item of items) {
@@ -182,7 +209,7 @@ const createFlagCollection = () => {
 		},
 		list,
 		toIDs,
-		toString,
+		toString: (integration = prettyName) => toIDs(integration).join(','),
 	};
 
 	return api;
