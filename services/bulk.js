@@ -57,7 +57,7 @@ const loadBufferFromFile = async () => {
 const sendBulkReport = async () => {
 	if (!BULK_REPORT_BUFFER.size) return;
 
-	logger.log(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`, 0, true);
+	logger.info(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`, { discord: true });
 
 	const records = Array.from(BULK_REPORT_BUFFER.entries(), ([ip, entry]) => [
 		ip,
@@ -74,7 +74,7 @@ const sendBulkReport = async () => {
 		});
 
 		const lines = payload.split('\n').length;
-		logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : ''}Generated CSV with ${chunk.length} records, ${lines} lines`, 1);
+		logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : ''}Generated CSV with ${chunk.length} records, ${lines} lines`);
 
 		if (OFFLINE_MODE) {
 			if (lines > 10000) {
@@ -87,7 +87,7 @@ const sendBulkReport = async () => {
 			}
 
 			const saved = chunk.length;
-			logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, 0 rejected [OFFLINE]`, 1, true);
+			logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, 0 rejected [OFFLINE]`, { discord: true });
 			return;
 		}
 
@@ -110,12 +110,12 @@ const sendBulkReport = async () => {
 		const saved = data?.data?.savedReports ?? 0;
 		const failed = data?.data?.invalidReports?.length ?? 0;
 
-		logger.log(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, ${failed} rejected`, 1, true);
+		logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, ${failed} rejected`, { discord: true });
 
 		if (failed > 0) {
 			const prefix = total > 1 ? `Chunk ${index + 1}: ` : '';
 			data.data.invalidReports.forEach(fail => {
-				logger.log(`${prefix}Rejected [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`, 2);
+				logger.warn(`${prefix}Rejected [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`);
 			});
 		}
 	};
@@ -139,14 +139,14 @@ const sendBulkReport = async () => {
 				chunks.push(records.slice(i, i + chunkSize));
 			}
 
-			logger.log(`File too large. Splitting ${records.length} records into ${chunks.length} chunks (~${chunkSize} records each)`, 0, true);
+			logger.info(`File too large. Splitting ${records.length} records into ${chunks.length} chunks (~${chunkSize} records each)`, { discord: true });
 
 			let allChunksSuccessful = true;
 			for (let i = 0; i < chunks.length; i++) {
 				try {
 					await sendChunk(chunks[i], i, chunks.length);
 				} catch (chunkErr) {
-					logger.log(`Chunk ${i + 1} failed: ${chunkErr.response?.data?.errors?.[0]?.detail || chunkErr.message}`, 3, true);
+					logger.error(`Chunk ${i + 1} failed: ${chunkErr.response?.data?.errors?.[0]?.detail || chunkErr.message}`);
 					allChunksSuccessful = false;
 				}
 			}
@@ -156,7 +156,7 @@ const sendBulkReport = async () => {
 				? err.response.data.errors.map(e => e.detail).join(', ')
 				: err.response?.data ? JSON.stringify(err.response.data) : err.stack;
 
-			logger.log(errorMsg, 3, true);
+			logger.error(errorMsg);
 		}
 	}
 
@@ -169,12 +169,12 @@ const sendBulkReport = async () => {
 			await fs.unlink(BUFFER_FILE);
 		} catch (err) {
 			// Ignore file deletion errors - file may not exist or already deleted
-			if (err.code !== 'ENOENT') logger.log(`Failed to delete buffer file: ${err.message}`, 2);
+			if (err.code !== 'ENOENT') logger.warn(`Failed to delete buffer file: ${err.message}`);
 		}
 
 		ABUSE_STATE.sentBulk = true;
 	} else {
-		logger.log('Bulk upload failed, keeping buffer file for retry', 3, true);
+		logger.error('Bulk upload failed, keeping buffer file for retry', { ping: true });
 	}
 };
 

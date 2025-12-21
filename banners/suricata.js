@@ -12,5 +12,5 @@ module.exports = () => {
    ${color('255;40;0')} \\__|__/${reset}
 `);
 
-	logger.log(donate);
+	logger.info(donate);
 };

@@ -6,17 +6,17 @@ const logger = require('../logger.js');
 const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${repoSlug}/main/package.json`;
 
 (async () => {
-	logger.log('Checking for new versions...');
+	logger.info('Checking for new versions...');
 
 	try {
 		const { data: { version: latest } } = await axiosGeneric.get(PACKAGE_JSON_URL);
 
 		if (semver.gt(latest, version)) {
-			logger.log(`A new version is available: v${version} → v${latest}. Please update.`, 0, true);
+			logger.info(`A new version is available: v${version} → v${latest}. Please update.`, { discord: true });
 		} else if (semver.gt(version, latest)) {
-			logger.log(`Local version v${version} is ahead of remote v${latest}.`, 0, true);
+			logger.info(`Local version v${version} is ahead of remote v${latest}.`, { discord: true });
 		}
 	} catch (err) {
-		logger.log(`Version check failed: ${err.stack}`, 3, true);
+		logger.error(`Version check failed: ${err.stack}`);
 	}
 })();

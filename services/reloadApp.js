@@ -7,10 +7,10 @@ const EXEC_TIMEOUT = 60000;
 const executeCmd = cmd => new Promise((resolve, reject) => {
 	exec(cmd, { timeout: EXEC_TIMEOUT }, (err, stdout, stderr) => {
 		if (err) {
-			logger.log(`Error executing command: ${cmd}\n${err}`, 3);
+			logger.error(`Error executing command: ${cmd}\n${err}`, { ping: true });
 			return reject(err);
 		}
-		if (stderr) logger.log(`Warning while executing: ${cmd}\n${stderr}`, 2);
+		if (stderr) logger.warn(`Warning while executing: ${cmd}\n${stderr}`);
 
 		resolve(stdout.trim());
 	});
@@ -25,15 +25,15 @@ const CMD_2 = (() => {
 module.exports = async () => {
 	try {
 		// 1 - npm dependencies
-		logger.log(`Running npm '${CMD_1}'...`);
+		logger.info(`Running npm '${CMD_1}'...`);
 		const result1 = await executeCmd(CMD_1);
-		logger.log(result1, 0, true);
+		logger.info(result1, { discord: true });
 
 		// 2 - restart
-		logger.log(`Running '${CMD_2}'...`);
+		logger.info(`Running '${CMD_2}'...`);
 		const result2 = await executeCmd(CMD_2);
-		logger.log(result2, 0, true);
+		logger.info(result2, { discord: true });
 	} catch (err) {
-		logger.log(err.stack, 3);
+		logger.error(err.stack);
 	}
 };

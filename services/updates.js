@@ -17,11 +17,11 @@ const getLocalVersion = () => {
 const pull = async () => {
 	try {
 		if (SERVER_ID !== 'development') {
-			if (EXTENDED_LOGS) logger.log('Resetting local repository to HEAD (--hard)...');
+			if (EXTENDED_LOGS) logger.info('Resetting local repository to HEAD (--hard)...');
 			await git.reset(['--hard']);
 		}
 
-		logger.log('Pulling the repository and the required submodule...');
+		logger.info('Pulling the repository and the required submodule...');
 
 		// Get submodule status before update
 		const submoduleBefore = await git.raw(['submodule', 'status']);
@@ -41,14 +41,14 @@ const pull = async () => {
 			const parts = [];
 			if (mainRepoChanged) parts.push(`Main repo - Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions};`);
 			if (submoduleChanged) parts.push('Submodule updated.');
-			logger.log(`Updates pulled successfully! ${parts.join(' ')}`, 0, true);
+			logger.info(`Updates pulled successfully! ${parts.join(' ')}`, { discord: true });
 		} else {
-			logger.log('No new updates detected', 1);
+			logger.success('No new updates detected');
 		}
 
 		return hasChanges;
 	} catch (err) {
-		logger.log(err.stack, 3);
+		logger.error(err.stack);
 		return null;
 	}
 };
@@ -60,14 +60,14 @@ const pullAndRestart = async () => {
 		const newVersion = getLocalVersion();
 
 		if (semver.neq(newVersion, oldVersion)) {
-			logger.log(`Version changed: ${oldVersion} → ${newVersion}`, 1, true);
+			logger.success(`Version changed: ${oldVersion} → ${newVersion}`, { discord: true });
 			await restartApp();
 			return;
 		}
 
 		if (updatesAvailable) await restartApp();
 	} catch (err) {
-		logger.log(err.stack, 3);
+		logger.error(err.stack);
 	}
 };
 

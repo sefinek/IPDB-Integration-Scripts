@@ -11,6 +11,6 @@ module.exports = () => {
   ${color('175;0;85')}  |_|   |_|   \\___/ \\__|${reset}
 `);
 
-	logger.log(donate);
-	logger.log(sniffcat);
+	logger.info(donate);
+	logger.info(sniffcat);
 };

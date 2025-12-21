@@ -32,22 +32,22 @@ const fetchIPAddress = async (family, attempt = 1) => {
 			ipAddresses.add(data.message);
 
 			if (family === 6 && ipv6ErrorCount > 0) {
-				logger.log(`IPv6 is now working. It succeeded after ${ipv6ErrorCount} failed attempts.`, 1);
+				logger.success(`IPv6 is now working. It succeeded after ${ipv6ErrorCount} failed attempts.`);
 				ipv6ErrorCount = 0;
 				ipv6ErrorLogged = false;
 			}
 		} else {
-			logger.log(`Unexpected API response: success=${data?.success}, message=${data?.message}`, 2);
+			logger.warn(`Unexpected API response: success=${data?.success}, message=${data?.message}`);
 		}
 	} catch (err) {
-		logger.log(`Failed to fetch IPv${family} address (attempt ${attempt}): ${err.message}`, 3);
+		logger.error(`Failed to fetch IPv${family} address (attempt ${attempt}): ${err.message}`);
 
 		if (family === 6) {
 			ipv6ErrorCount++;
 
 			if (ipv6ErrorCount >= 6 && !ipv6ErrorLogged) {
 				ipv6ErrorLogged = true;
-				logger.log('IPv6 address could not be retrieved after multiple attempts. Disabling further checks.', 2);
+				logger.warn('IPv6 address could not be retrieved after multiple attempts. Disabling further checks.');
 			} else if (attempt < 6) {
 				await new Promise(resolve => setTimeout(resolve, 4000));
 				await fetchIPAddress(6, attempt + 1);
@@ -58,17 +58,17 @@ const fetchIPAddress = async (family, attempt = 1) => {
 
 const refreshServerIPs = async () => {
 	if (isRefreshing) {
-		logger.log('IP refresh already in progress, skipping...', 1);
+		logger.info('IP refresh already in progress, skipping...');
 		return;
 	}
 
 	isRefreshing = true;
-	logger.log('Trying to fetch your IPv4 and IPv6 address from api.sefinek.net...');
+	logger.info('Trying to fetch your IPv4 and IPv6 address from api.sefinek.net...');
 
 	try {
 		await Promise.all([fetchIPAddress(0), fetchIPAddress(4), fetchIPAddress(6)]);
 	} catch (err) {
-		logger.log(`Failed to refresh IP addresses: ${err.message}`, 3);
+		logger.error(`Failed to refresh IP addresses: ${err.message}`);
 	} finally {
 		isRefreshing = false;
 	}
