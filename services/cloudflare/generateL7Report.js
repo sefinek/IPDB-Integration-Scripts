@@ -24,10 +24,10 @@ const fetchCloudflareEvents = async () => {
 			if (!events) throw new Error(`Failed to retrieve data from Cloudflare (status ${status}): ${JSON.stringify(data?.errors)}`);
 
 			const l7ddosEvents = events.filter(e => e.source === 'l7ddos');
-			logger.log(`Zone ${zoneId}: ${events.length} events fetched (${l7ddosEvents.length} L7 DDoS)`, 1);
+			logger.success(`Zone ${zoneId}: ${events.length} events fetched (${l7ddosEvents.length} L7 DDoS)`);
 			allEvents.push(...l7ddosEvents);
 		} catch (err) {
-			logger.log(err.response?.data ? `${err.response.status} HTTP ERROR for zone ${zoneId}: ${JSON.stringify(err.response.data, null, 2)}` : `Unknown error for zone ${zoneId}: ${err.message}`, 3);
+			logger.error(err.response?.data ? `${err.response.status} HTTP ERROR for zone ${zoneId}: ${JSON.stringify(err.response.data, null, 2)}` : `Unknown error for zone ${zoneId}: ${err.message}`);
 		}
 	}
 
@@ -57,8 +57,8 @@ const saveToTXT = (events, filePath = 'report.txt') => {
 	if (events.length) {
 		saveToCSV(events);
 		saveToTXT(events);
-		logger.log(`Saved ${events.length} L7 DDoS events to CSV and TXT`, 1);
+		logger.success(`Saved ${events.length} L7 DDoS events to CSV and TXT`);
 	} else {
-		logger.log('No L7 DDoS events found');
+		logger.info('No L7 DDoS events found');
 	}
 })();

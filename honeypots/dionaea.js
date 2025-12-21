@@ -71,13 +71,13 @@ const getReportDetails = (entry, dpt) => {
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.log(`DIONAEA -> Log file not found: ${LOG_FILE}`, 3, true);
+	if (!fs.existsSync(LOG_FILE)) return logger.error(`DIONAEA -> Log file not found: ${LOG_FILE}`, { ping: true });
 
 	const tail = new TailFile(LOG_FILE);
 	tail
-		.on('tail_error', err => logger.log(err, 3))
+		.on('tail_error', err => logger.error(err))
 		.start()
-		.catch(err => logger.log(err, 3));
+		.catch(err => logger.error(err));
 
 	tail
 		.pipe(split2())
@@ -88,7 +88,7 @@ module.exports = reportIp => {
 			try {
 				entry = JSON.parse(line);
 			} catch (err) {
-				return logger.log(`DIONAEA -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`, 3, true);
+				return logger.error(`DIONAEA -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
 			}
 
 			try {
@@ -101,11 +101,11 @@ module.exports = reportIp => {
 
 				logIpToFile(srcIp, { honeypot: 'DIONAEA', comment });
 			} catch (err) {
-				logger.log(err, 3);
+				logger.error(err);
 			}
 		});
 
-	logger.log('🛡️ DIONAEA » Watcher initialized', 1);
+	logger.success('🛡️ DIONAEA » Watcher initialized');
 	return {
 		tail,
 		flush: () => null,

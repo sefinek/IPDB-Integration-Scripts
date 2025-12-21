@@ -18,12 +18,12 @@ const summaryEmbed = async () => {
 	const baseTs = Math.floor(Date.UTC(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate()) / 1000);
 
 	if (EXTENDED_LOGS) {
-		logger.log(`Daily summary » Using base timestamp: ${baseTs} (${new Date(baseTs * 1000).toISOString()}) for ${yesterdayString}`);
+		logger.info(`Daily summary » Using base timestamp: ${baseTs} (${new Date(baseTs * 1000).toISOString()}) for ${yesterdayString}`);
 	}
 
 	let data;
 	if (SERVER_ID === 'development') {
-		logger.log('Daily summary » Using test data instead of reading cache file [DEV]');
+		logger.info('Daily summary » Using test data instead of reading cache file [DEV]');
 		const generateRandomIp = () => Array(4).fill(0).map(() => Math.floor(Math.random() * 256)).join('.');
 		const generateTimestamps = () => baseTs + Math.floor(Math.random() * 86400);
 		const entries = Array.from({ length: Math.floor(Math.random() * 1001) + 4000 }, () => `${generateRandomIp()} ${generateTimestamps()}`);
@@ -32,9 +32,9 @@ const summaryEmbed = async () => {
 		try {
 			await fs.access(RESOLVED_CACHE_FILE);
 			data = (await fs.readFile(RESOLVED_CACHE_FILE, 'utf8')).trim();
-			if (!data) return logger.log(`Daily summary » Cache file exists but is empty: ${RESOLVED_CACHE_FILE}`, 2);
+			if (!data) return logger.warn(`Daily summary » Cache file exists but is empty: ${RESOLVED_CACHE_FILE}`);
 		} catch (err) {
-			return logger.log(`Daily summary » Failed to access/read cache file: ${err.message}`, 2);
+			return logger.warn(`Daily summary » Failed to access/read cache file: ${err.message}`);
 		}
 	}
 
@@ -60,7 +60,7 @@ const summaryEmbed = async () => {
 		}
 
 		if (!Object.keys(hourlySummary).length) {
-			return logger.log(`Daily summary » No reports found for ${yesterdayString}`, 2);
+			return logger.warn(`Daily summary » No reports found for ${yesterdayString}`);
 		}
 
 		const sortedChrono = Object.entries(hourlySummary)
@@ -77,19 +77,19 @@ const summaryEmbed = async () => {
 		const summaryStr = sortedChrono
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}${top3.includes(h) ? ' 🔥' : ''}`)
 			.join('\n');
-		logger.log(`Midnight. Summary of IP address reports (${total}) from ${yesterdayString}:\n${summaryStr}`);
+		logger.info(`Midnight. Summary of IP address reports (${total}) from ${yesterdayString}:\n${summaryStr}`);
 
 		const peakStr = top3Sorted
 			.map(([h, c]) => `${formatHourRange(h)} → ${c} ${pluralizeReport(c)}`)
 			.join('\n');
-		logger.log(`Top 3 peaks:\n${peakStr}`);
+		logger.info(`Top 3 peaks:\n${peakStr}`);
 
 		await logger.webhook(
 			`Midnight. Summary of IP address reports from yesterday.\nGood night to you, sleep well! 😴\n### ${total} ${pluralizeReport(total)} from ${yesterdayString}\n\`\`\`${summaryStr}\`\`\`\n### Top 3 peaks\n\`\`\`${peakStr}\`\`\``,
 			0x00FF39
 		);
 	} catch (err) {
-		logger.log(`Daily summary » Unexpected error:\n${err.stack}`, 3);
+		logger.error(`Daily summary » Unexpected error:\n${err.stack}`);
 	}
 };
 

@@ -19,6 +19,6 @@ module.exports = async (ip, metadata = {}) => {
 		await fs.mkdir(ipDir, { recursive: true });
 		await fs.appendFile(logFile, logEntry);
 	} catch (err) {
-		logger.log(`Failed to write IP log for ${ip}: ${err.message}`, 3, true);
+		logger.error(`Failed to write IP log for ${ip}: ${err.message}`);
 	}
 };

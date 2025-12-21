@@ -9,6 +9,6 @@ module.exports = () => {
     ${color('255;120;0')}(___.__)__)${reset}
 `);
 
-	logger.log(donate);
-	logger.log(sniffcat);
+	logger.info(donate);
+	logger.info(sniffcat);
 };

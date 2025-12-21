@@ -106,7 +106,7 @@ const flushBuffer = async (srcIp, reportIp) => {
 	} = extractSessionData(sessions);
 
 	if (!srcIp || !dpt || !proto) {
-		return logger.log(`COWRIE -> Incomplete data for ${srcIp}, discarded`, 2, true);
+		return logger.warn(`COWRIE -> Incomplete data for ${srcIp}, discarded`);
 	}
 
 	const shortComment = buildComment({ serverId: SERVER_ID, dpt, proto, creds, commands, sshVersion, downloadUrls, fingerprints, uploads, tunnels }, false);
@@ -114,7 +114,7 @@ const flushBuffer = async (srcIp, reportIp) => {
 	const rest = restLines.length ? `\n${restLines.join('\n')}` : '';
 
 	await reportIp('COWRIE', { srcIp, dpt, proto, timestamp }, categories, shortComment);
-	if (restLines.length) await logger.log(rest);
+	if (restLines.length) await logger.info(rest);
 	await logger.webhook(`### Cowrie: ${srcIp} on ${dpt}/${proto}${rest}`);
 
 	logIpToFile(srcIp, { honeypot: 'COWRIE', comment: buildComment({ serverId: SERVER_ID, dpt, proto, creds, commands, sshVersion, downloadUrls, fingerprints, uploads, tunnels }, true) });
@@ -124,7 +124,7 @@ const processCowrieLogLine = async (entry, reportIp) => {
 	const ip = entry?.src_ip;
 	const sessionId = entry?.session;
 	const { eventid } = entry;
-	if (!ip || !eventid || !sessionId) return logger.log('COWRIE -> Skipped: missing src_ip, eventid or sessionId', 2, true);
+	if (!ip || !eventid || !sessionId) return logger.warn('COWRIE -> Skipped: missing src_ip, eventid or sessionId');
 
 	let buffer = ipBuffers.get(ip);
 	if (!buffer) {
@@ -163,7 +163,7 @@ const processCowrieLogLine = async (entry, reportIp) => {
 			session.dpt = entry.dst_port;
 			session.proto = entry.protocol;
 			session.timestamp = entry.timestamp;
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: Connect`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: Connect`);
 		}
 		break;
 
@@ -172,21 +172,21 @@ const processCowrieLogLine = async (entry, reportIp) => {
 		if (session && (entry.username || entry.password)) {
 			session.credentials.set(`${ipSanitizer(entry.username)}:${ipSanitizer(entry.password)}`, true);
 			const status = eventid === 'cowrie.login.success' ? 'Connected' : 'Failed login';
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: ${status} » ${entry.username}:${entry.password}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: ${status} » ${entry.username}:${entry.password}`);
 		}
 		break;
 
 	case 'cowrie.client.version':
 		if (session) {
 			session.sshVersion = entry.version;
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: SSH version » ${entry.version}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: SSH version » ${entry.version}`);
 		}
 		break;
 
 	case 'cowrie.command.input':
 		if (session && entry.input) {
 			session.commands.push(entry.input);
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: $ ${entry.input}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: $ ${entry.input}`);
 		}
 		break;
 
@@ -194,21 +194,21 @@ const processCowrieLogLine = async (entry, reportIp) => {
 		if (session && entry.url) {
 			session.commands.push(`[download] ${entry.url}`);
 			session.download = { url: entry.url, outfile: entry.outfile };
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: File download » ${entry.url}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: File download » ${entry.url}`);
 		}
 		break;
 
 	case 'cowrie.client.fingerprint':
 		if (session && entry.fingerprint) {
 			session.fingerprint = entry.fingerprint;
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: SSH key fingerprint » ${entry.fingerprint}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: SSH key fingerprint » ${entry.fingerprint}`);
 		}
 		break;
 
 	case 'cowrie.session.file_upload':
 		if (session && entry.filename) {
 			session.uploads.push(entry.filename);
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: File upload » ${entry.filename}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: File upload » ${entry.filename}`);
 		}
 		break;
 
@@ -216,24 +216,24 @@ const processCowrieLogLine = async (entry, reportIp) => {
 		if (session && entry.dst_ip && entry.dst_port) {
 			const tunnel = `${entry.dst_ip}:${entry.dst_port}`;
 			session.tunnels.push(tunnel);
-			logger.log(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: TCP tunnel request » ${tunnel}`);
+			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: TCP tunnel request » ${tunnel}`);
 		}
 		break;
 
 	case 'cowrie.session.closed':
-		logger.log(`COWRIE -> ${ip}/${session?.proto ?? 'unknown'}/${session?.dpt ?? '-'}: Session ${sessionId} closed`);
+		logger.info(`COWRIE -> ${ip}/${session?.proto ?? 'unknown'}/${session?.dpt ?? '-'}: Session ${sessionId} closed`);
 		break;
 	}
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.log(`COWRIE -> Log file not found: ${LOG_FILE}`, 3, true);
+	if (!fs.existsSync(LOG_FILE)) return logger.error(`COWRIE -> Log file not found: ${LOG_FILE}`, { ping: true });
 
 	const tail = new TailFile(LOG_FILE);
 	tail
-		.on('tail_error', err => logger.log(err, 3))
+		.on('tail_error', err => logger.error(err))
 		.start()
-		.catch(err => logger.log(err, 3));
+		.catch(err => logger.error(err));
 
 	tail
 		.pipe(split2())
@@ -244,13 +244,13 @@ module.exports = reportIp => {
 			try {
 				entry = JSON.parse(line);
 			} catch (err) {
-				return logger.log(`COWRIE -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`, 3, true);
+				return logger.error(`COWRIE -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
 			}
 
 			try {
 				await processCowrieLogLine(entry, reportIp);
 			} catch (err) {
-				logger.log(err, 3);
+				logger.error(err);
 			}
 		});
 
@@ -261,12 +261,12 @@ module.exports = reportIp => {
 			if (now - buffer.lastSeen > 30 * 60 * 1000) {
 				clearTimeout(buffer.timer);
 				ipBuffers.delete(ip);
-				logger.log(`COWRIE -> Cleaned up stale session buffer for ${ip}`, 2, true);
+				logger.warn(`COWRIE -> Cleaned up stale session buffer for ${ip}`);
 			}
 		}
 	}, 15 * 60 * 1000);
 
-	logger.log('🛡️ COWRIE » Watcher initialized', 1);
+	logger.success('🛡️ COWRIE » Watcher initialized');
 	return {
 		tail,
 		flush: async () => {

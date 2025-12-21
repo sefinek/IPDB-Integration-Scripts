@@ -15,9 +15,9 @@ const ensureCacheDir = async () => {
 	} catch (err) {
 		if (err.code === 'ENOENT') {
 			await fs.mkdir(dir, { recursive: true });
-			logger.log(`Created cache directory: ${dir}`, 1);
+			logger.success(`Created cache directory: ${dir}`);
 		} else {
-			logger.log(`Failed to access cache directory: ${err.stack}`, 3);
+			logger.error(`Failed to access cache directory: ${err.stack}`);
 		}
 	}
 };
@@ -38,9 +38,9 @@ const loadReportedIPs = async () => {
 			});
 	} catch (err) {
 		if (err.code === 'ENOENT') {
-			logger.log(`${RESOLVED_CACHE_FILE} does not exist. No data to load.`);
+			logger.info(`${RESOLVED_CACHE_FILE} does not exist. No data to load.`);
 		} else {
-			logger.log(`Failed to load cache file: ${err.stack}`, 3);
+			logger.error(`Failed to load cache file: ${err.stack}`);
 		}
 	}
 };
@@ -55,7 +55,7 @@ const saveReportedIPs = async () => {
 			.join('\n');
 		await fs.writeFile(RESOLVED_CACHE_FILE, data, 'utf8');
 	} catch (err) {
-		logger.log(`Failed to save cache file: ${err.stack}`, 3);
+		logger.error(`Failed to save cache file: ${err.stack}`);
 	}
 };
 

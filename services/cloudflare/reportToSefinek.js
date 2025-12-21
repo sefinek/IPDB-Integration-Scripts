@@ -11,7 +11,7 @@ module.exports = async () => {
 		!serverIPs.includes(x.ip) &&
 		!x.sefinekAPI
 	);
-	if (!reportedIPs.length) return logger.log('Sefinek API: No data to report');
+	if (!reportedIPs.length) return logger.info('Sefinek API: No data to report');
 
 	const seenIPs = new Set();
 	const uniqueLogs = reportedIPs.filter(ip => {
@@ -20,7 +20,7 @@ module.exports = async () => {
 		return true;
 	});
 
-	if (!uniqueLogs.length) return logger.log(`Sefinek API: No unique IPs to send (reportedIPs = ${reportedIPs.length}; uniqueLogs = ${uniqueLogs.length})`);
+	if (!uniqueLogs.length) return logger.info(`Sefinek API: No unique IPs to send (reportedIPs = ${reportedIPs.length}; uniqueLogs = ${uniqueLogs.length})`);
 
 	try {
 		const payload = uniqueLogs.map(ip => ({
@@ -43,14 +43,14 @@ module.exports = async () => {
 		const res = await axiosSefinek.post('https://api.sefinek.net/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
 		// const res = await axiosSefinek.post('http://127.0.0.1:4010/api/v2/cloudflare-waf-abuseipdb', form, { headers: { ...form.getHeaders() } });
 		if (res.data.success) {
-			logger.log(`Sefinek API (status: ${res.status}): Successfully sent ${uniqueLogs.length} logs`, 1);
+			logger.success(`Sefinek API (status: ${res.status}): Successfully sent ${uniqueLogs.length} logs`);
 			await batchUpdateSefinekAPIInCSV(uniqueLogs.map(x => x.rayId));
 		} else {
-			logger.log(`Sefinek API (status: ${res.status}): ${res.data.message || 'Something went wrong'}`, 2);
+			logger.warn(`Sefinek API (status: ${res.status}): ${res.data.message || 'Something went wrong'}`);
 		}
 	} catch (err) {
 		if (err.response?.data?.message?.includes('No valid or unique')) return;
 		const msg = err.response?.data?.message ?? err.message;
-		logger.log(`Sefinek API (status: ${err.response?.status ?? 'unknown'}): Failed to send logs! Message: ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`, 3);
+		logger.error(`Sefinek API (status: ${err.response?.status ?? 'unknown'}): Failed to send logs! Message: ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`, { ping: true });
 	}
 };

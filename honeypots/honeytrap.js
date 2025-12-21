@@ -122,18 +122,18 @@ const flushBuffer = async reportIp => {
 		logIpToFile(srcIp, { honeypot: 'HONEYTRAP', comment });
 	}
 
-	logger.log(`HONEYTRAP -> Flushed ${attackBuffer.size} IPs`, 1);
+	logger.success(`HONEYTRAP -> Flushed ${attackBuffer.size} IPs`);
 	attackBuffer.clear();
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.log(`HONEYTRAP -> Log file not found: ${LOG_FILE}`, 3, true);
+	if (!fs.existsSync(LOG_FILE)) return logger.error(`HONEYTRAP -> Log file not found: ${LOG_FILE}`, { ping: true });
 
 	const tail = new TailFile(LOG_FILE);
 	tail
-		.on('tail_error', err => logger.log(err, 3))
+		.on('tail_error', err => logger.error(err))
 		.start()
-		.catch(err => logger.log(err, 3));
+		.catch(err => logger.error(err));
 
 	tail
 		.pipe(split2())
@@ -144,7 +144,7 @@ module.exports = reportIp => {
 			try {
 				entry = JSON.parse(line);
 			} catch (err) {
-				return logger.log(`HONEYTRAP -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`, 3, true);
+				return logger.error(`HONEYTRAP -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
 			}
 
 			try {
@@ -167,9 +167,9 @@ module.exports = reportIp => {
 					ipData.set(dpt, portData);
 				}
 
-				logger.log(`HONEYTRAP -> ${srcIp} hit ${dpt} | x${portData.count}`);
+				logger.info(`HONEYTRAP -> ${srcIp} hit ${dpt} | x${portData.count}`);
 			} catch (err) {
-				logger.log(err, 3);
+				logger.error(err);
 			}
 		});
 
@@ -181,7 +181,7 @@ module.exports = reportIp => {
 		}
 	}, 60 * 1000);
 
-	logger.log('🛡️ HONEYTRAP » Watcher initialized', 1);
+	logger.success('🛡️ HONEYTRAP » Watcher initialized');
 	return {
 		tail,
 		flush: () => flushBuffer(reportIp),

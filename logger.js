@@ -132,12 +132,12 @@ class Logger {
 	}
 
 	static warn(msg, options = {}) {
-		const opts = this.#normalizeOptions(options, true, true);
+		const opts = this.#normalizeOptions(options, true, false);
 		this.log(msg, 2, opts);
 	}
 
 	static error(msg, options = {}) {
-		const opts = this.#normalizeOptions(options, true, true);
+		const opts = this.#normalizeOptions(options, true, false);
 		this.log(msg, 3, opts);
 	}
 

@@ -30,9 +30,9 @@ const ensureCSVExists = async () => {
 		if (existsSync(CSV_FILE)) return;
 		await fs.mkdir(path.dirname(CSV_FILE), { recursive: true });
 		await fs.writeFile(CSV_FILE, stringify([], CSV_STRINGIFY_OPTS));
-		logger.log(`Created missing CSV file: ${CSV_FILE}`, 1);
+		logger.success(`Created missing CSV file: ${CSV_FILE}`);
 	} catch (err) {
-		logger.log(`Failed to ensure CSV exists: ${err.stack}`, 3, true);
+		logger.error(`Failed to ensure CSV exists: ${err.stack}`);
 		throw err;
 	}
 };
@@ -48,10 +48,10 @@ const checkCSVSize = async () => {
 
 			await fs.copyFile(CSV_FILE, backupPath);
 			await fs.writeFile(CSV_FILE, stringify([], CSV_STRINGIFY_OPTS));
-			logger.log(`CSV size limit exceeded (${(MAX_CSV_SIZE / (1024 * 1024)).toFixed(2)} MB). Backup saved as "${path.basename(backupPath)}", original file cleared.`, 1);
+			logger.success(`CSV size limit exceeded (${(MAX_CSV_SIZE / (1024 * 1024)).toFixed(2)} MB). Backup saved as "${path.basename(backupPath)}", original file cleared.`);
 		}
 	} catch (err) {
-		logger.log(`Failed to check or clear CSV size: ${err.stack}`, 3, true);
+		logger.error(`Failed to check or clear CSV size: ${err.stack}`);
 	}
 };
 
@@ -82,7 +82,7 @@ const logToCSV = async (event, status = 'N/A', sefinekAPI = false) => {
 		const line = stringify([row], { ...CSV_STRINGIFY_OPTS, header: false });
 		await fs.appendFile(CSV_FILE, line);
 	} catch (err) {
-		logger.log(`Failed to log event to CSV: ${err.stack}`, 3, true);
+		logger.error(`Failed to log event to CSV: ${err.stack}`);
 	}
 };
 
@@ -106,7 +106,7 @@ const readReportedIPs = async () => {
 			sefinekAPI: row['Sefinek API'] === 'true',
 		}));
 	} catch (err) {
-		logger.log(`Failed to parse or map CSV content: ${err.stack}`, 3, true);
+		logger.error(`Failed to parse or map CSV content: ${err.stack}`);
 		return [];
 	}
 };
@@ -133,7 +133,7 @@ const batchUpdateSefinekAPIInCSV = async (rayIds = []) => {
 			await fs.writeFile(CSV_FILE, output);
 		}
 	} catch (err) {
-		logger.log(`Batch CSV update failed: ${err.stack}`, 3, true);
+		logger.error(`Batch CSV update failed: ${err.stack}`);
 	}
 };
 
