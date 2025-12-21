@@ -33,7 +33,7 @@ const saveBufferToFile = async () => {
 		await ensureDirectoryExists(BUFFER_FILE);
 		await fs.writeFile(BUFFER_FILE, output);
 	} catch (err) {
-		logger.error(`Failed to write buffer file: ${err.message}`);
+		logger.error(`Failed to write buffer file: ${err.message}`, { ping: true });
 	}
 };
 
