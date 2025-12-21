@@ -1,8 +1,11 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
-const logger = require('../logger.js');
 const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
+
+// Lazy-load logger to avoid circular dependency (logger.js requires axios.js)
+let logger;
+const getLogger = () => logger || (logger = require('../logger.js'));
 
 const DEFAULT_HEADERS = {
 	'User-Agent': `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoUrl})`,
@@ -41,11 +44,11 @@ const resolveServiceConfig = str => {
 
 const serviceConfig = resolveServiceConfig(repoName);
 if (!serviceConfig) {
-	logger.log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
+	getLogger().log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
 	process.exit(1);
 } else if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
-	logger.log(`Base URL: ${serviceConfig.baseURL}`);
-	logger.log(JSON.stringify(serviceConfig.headers));
+	getLogger().log(`Base URL: ${serviceConfig.baseURL}`);
+	getLogger().log(JSON.stringify(serviceConfig.headers));
 }
 
 // Resolve headers for bulk (multipart + token)
@@ -73,7 +76,7 @@ const retryOptions = {
 		const status = err.response?.status
 			? `Status ${err.response.status}`
 			: err.code || err.message || 'Unknown error';
-		logger.log(`${status} - retry #${count} for ${config.url}`, 2);
+		getLogger().log(`${status} - retry #${count} for ${config.url}`, 2);
 	},
 };
 
