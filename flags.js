@@ -1,4 +1,5 @@
 const { prettyName } = require('./repo.js');
+const logger = require('./logger.js');
 
 /**
  * @typedef {
@@ -203,7 +204,11 @@ const createFlagCollection = () => {
 	const api = {
 		add: /** @param {...Flag} items */ (...items) => {
 			for (const item of items) {
-				if (Object.prototype.hasOwnProperty.call(FLAGS, item)) flags.add(item);
+				if (Object.prototype.hasOwnProperty.call(FLAGS, item)) {
+					flags.add(item);
+				} else {
+					logger.warn(`Invalid abuse flag ignored! flag='${item}' integration='${prettyName}'`, { discord: true, ping: false });
+				}
 			}
 			return api;
 		},
