@@ -33,7 +33,7 @@ const saveBufferToFile = async () => {
 		await ensureDirectoryExists(BUFFER_FILE);
 		await fs.writeFile(BUFFER_FILE, output);
 	} catch (err) {
-		logger.log(`❗ Failed to write buffer file: ${err.message}`, 3, true);
+		logger.error(`Failed to write buffer file: ${err.message}`);
 	}
 };
 
@@ -50,7 +50,7 @@ const loadBufferFromFile = async () => {
 			BULK_REPORT_BUFFER.set(ip, { categories, timestamp: new Date(timestamp).getTime(), comment });
 		}
 	} catch (err) {
-		if (err.code !== 'ENOENT') logger.log(`Failed to parse/load buffer file: ${err.message}`, 3, true);
+		if (err.code !== 'ENOENT') logger.error(`Failed to parse/load buffer file: ${err.message}`);
 	}
 };
 
