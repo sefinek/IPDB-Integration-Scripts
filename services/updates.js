@@ -6,9 +6,8 @@ const restartApp = require('./reloadApp.js');
 const logger = require('../logger.js');
 const { SERVER_ID, AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
-const repoRoot = path.resolve(__dirname, '../../');
-const pkgPath = path.resolve(repoRoot, 'package.json');
-const git = simpleGit(repoRoot);
+const git = simpleGit();
+const pkgPath = path.resolve(__dirname, '../../package.json');
 
 const getLocalVersion = () => {
 	delete require.cache[require.resolve(pkgPath)];
@@ -22,15 +21,27 @@ const pull = async () => {
 			await git.reset(['--hard']);
 		}
 
-		logger.info('Pulling the repository and submodules...');
+		logger.info('Pulling the repository and the required submodule...');
 
-		const pullResult = await git.pull('origin', 'main');
-		await git.submoduleUpdate(['--init', '--recursive']);
+		// Get submodule status before update
+		const submoduleBefore = await git.raw(['submodule', 'status']);
+
+		// Pull main repo and update submodules
+		const pullResult = await git.pull();
+		await git.submoduleUpdate(['--init', '--recursive', '--remote', '--merge']);
+
+		// Get submodule status after update
+		const submoduleAfter = await git.raw(['submodule', 'status']);
+		const submoduleChanged = submoduleBefore !== submoduleAfter;
 
 		const { changes, insertions, deletions } = pullResult.summary;
-		const hasChanges = changes > 0 || insertions > 0 || deletions > 0;
+		const mainRepoChanged = changes > 0 || insertions > 0 || deletions > 0;
+		const hasChanges = mainRepoChanged || submoduleChanged;
 		if (hasChanges) {
-			logger.info(`Updates pulled successfully! Changes: ${changes}, +${insertions}/-${deletions}`, { discord: true });
+			const parts = [];
+			if (mainRepoChanged) parts.push(`Main repo - Changes: ${changes}; Insertions: ${insertions}; Deletions: ${deletions};`);
+			if (submoduleChanged) parts.push('Submodule updated.');
+			logger.info(`Updates pulled successfully! ${parts.join(' ')}`, { discord: true });
 		} else {
 			logger.success('No new updates detected');
 		}
@@ -49,7 +60,7 @@ const pullAndRestart = async () => {
 		const newVersion = getLocalVersion();
 
 		if (semver.neq(newVersion, oldVersion)) {
-			logger.success(`Version changed: ${oldVersion} -> ${newVersion}`, { discord: true });
+			logger.success(`Version changed: ${oldVersion} → ${newVersion}`, { discord: true });
 			await restartApp();
 			return;
 		}
