@@ -14,8 +14,6 @@ const getLocalVersion = () => {
 	return require(pkgPath).version;
 };
 
-// test 123
-
 const pull = async () => {
 	try {
 		if (SERVER_ID !== 'development') {
