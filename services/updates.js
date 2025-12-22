@@ -11,6 +11,8 @@ const repoRoot = path.resolve(__dirname, '../../');
 const pkgPath = path.resolve(repoRoot, 'package.json');
 const git = simpleGit(repoRoot);
 
+// test1
+
 const parseGitmodules = () => {
 	try {
 		const file = path.join(repoRoot, '.gitmodules');
