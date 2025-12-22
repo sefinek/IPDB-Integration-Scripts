@@ -1,8 +1,8 @@
 const fs = require('node:fs');
+const path = require('node:path');
 const simpleGit = require('simple-git');
 const semver = require('semver');
 const { CronJob } = require('cron');
-const path = require('node:path');
 const restartApp = require('./reloadApp.js');
 const logger = require('../logger.js');
 const { SERVER_ID, AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
@@ -11,74 +11,84 @@ const repoRoot = path.resolve(__dirname, '../../');
 const pkgPath = path.resolve(repoRoot, 'package.json');
 const git = simpleGit(repoRoot);
 
-const SUBMODULE_BRANCHES = (() => {
+const parseGitmodules = () => {
 	try {
 		const file = path.join(repoRoot, '.gitmodules');
-		if (!fs.existsSync(file)) return {};
-		// test3
-		const lines = fs.readFileSync(file, 'utf8').split('\n');
-		const map = {};
+		if (!fs.existsSync(file)) return [];
+
+		const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+		const list = [];
 		let current = null;
 
 		for (const rawLine of lines) {
 			const line = rawLine.trim();
 			if (!line) continue;
 
-			const sectionMatch = line.match(/^\[submodule "(.*)"\\]/);
+			const sectionMatch = line.match(/^\[submodule "(.*)"\]$/);
 			if (sectionMatch) {
-				if (current?.path) map[current.path] = current.branch || 'main';
+				if (current?.path) list.push({ ...current });
 				current = { name: sectionMatch[1], branch: 'main' };
 				continue;
 			}
 
 			if (!current) continue;
+
 			const pathMatch = line.match(/^path\s*=\s*(.+)$/);
 			if (pathMatch) {
 				current.path = pathMatch[1].trim();
 				continue;
 			}
+
 			const branchMatch = line.match(/^branch\s*=\s*(.+)$/);
 			if (branchMatch) {
 				current.branch = branchMatch[1].trim();
 			}
 		}
 
-		if (current?.path) map[current.path] = current.branch || 'main';
-		return map;
+		if (current?.path) list.push(current);
+		return list;
 	} catch {
-		return {};
+		return [];
 	}
-})();
+};
+
+const SUBMODULES = parseGitmodules();
 
 const getLocalVersion = () => {
 	delete require.cache[require.resolve(pkgPath)];
 	return require(pkgPath).version;
 };
 
-const ensureSubmodulesOnMain = async statusOutput => {
-	const detached = statusOutput
-		.split('\n')
-		.map(line => line.trim())
-		.filter(line => line && line.includes('detached'))
-		.map(line => {
-			const match = line.match(/^[+-]?[\da-f]{40}\s+(\S+)/);
-			return match ? match[1] : null;
-		})
-		.filter(Boolean);
+const configureSubmoduleBranches = async () => {
+	if (!SUBMODULES.length) return;
 
-	if (!detached.length) return false;
+	for (const submodule of SUBMODULES) {
+		await git.raw(['config', `submodule.${submodule.name}.branch`, submodule.branch]);
+	}
+};
 
-	for (const submodulePath of detached) {
-		const targetBranch = SUBMODULE_BRANCHES[submodulePath] || 'main';
-		const subGit = simpleGit(path.join(repoRoot, submodulePath));
-		logger.warn(`Submodule "${submodulePath}" is detached. Checking out "${targetBranch}"...`);
-		await subGit.fetch('origin', targetBranch);
-		await subGit.checkout(targetBranch);
-		await subGit.reset(['--hard', `origin/${targetBranch}`]);
+const syncSubmoduleWorktrees = async () => {
+	if (!SUBMODULES.length) return false;
+
+	let reattached = false;
+	for (const submodule of SUBMODULES) {
+		const submodulePath = path.join(repoRoot, submodule.path);
+		if (!fs.existsSync(submodulePath)) continue;
+
+		const subGit = simpleGit(submodulePath);
+		await subGit.fetch('origin', submodule.branch);
+
+		const currentRef = (await subGit.raw(['rev-parse', '--abbrev-ref', 'HEAD'])).trim();
+		if (currentRef !== submodule.branch) {
+			logger.warn(`Submodule "${submodule.path}" is on "${currentRef}". Switching to "${submodule.branch}"...`);
+			await subGit.checkout(submodule.branch);
+			reattached = true;
+		}
+
+		await subGit.reset(['--hard', `origin/${submodule.branch}`]);
 	}
 
-	logger.success(`Reattached ${detached.length} submodule(s) to their configured branches.`);
-	return true;
+	return reattached;
 };
 
 const pull = async () => {
@@ -88,24 +98,30 @@ const pull = async () => {
 			await git.reset(['--hard']);
 		}
 
-		logger.info('Pulling the repository and the required submodule...');
+		logger.info('Pulling the repository and submodules...');
 
-		const submoduleBefore = await git.raw(['submodule', 'status']);
+		const submoduleStatusBefore = await git.raw(['submodule', 'status', '--recursive']);
+		const pullResult = await git.pull('origin', 'main');
 
-		const pullOutput = await git.raw(['pull', 'origin', 'main']);
+		await configureSubmoduleBranches();
+		await git.raw(['submodule', 'sync', '--recursive']);
 		await git.raw(['submodule', 'update', '--init', '--recursive', '--remote']);
 
-		const submoduleAfter = await git.raw(['submodule', 'status']);
-		const submoduleFixed = await ensureSubmodulesOnMain(submoduleAfter);
-		const submoduleChanged = submoduleBefore !== submoduleAfter;
-		const repoChanged = !pullOutput.includes('Already up to date');
-		const hasChanges = repoChanged || submoduleChanged || submoduleFixed;
+		const submoduleStatusAfter = await git.raw(['submodule', 'status', '--recursive']);
+		const submoduleDetachedFixed = await syncSubmoduleWorktrees();
+
+		const submoduleChanged = submoduleStatusBefore !== submoduleStatusAfter;
+		const repoSummary = pullResult.summary || { changes: 0, insertions: 0, deletions: 0 };
+		const repoChanged = pullResult.files.length > 0 || repoSummary.changes > 0 || repoSummary.insertions > 0 || repoSummary.deletions > 0;
+		const hasChanges = repoChanged || submoduleChanged || submoduleDetachedFixed;
 
 		if (hasChanges) {
 			const parts = [];
-			if (repoChanged) parts.push('Main repo updated.');
-			if (submoduleChanged) parts.push('Submodules updated.');
-			if (submoduleFixed) parts.push('Detached submodules reattached to main.');
+			if (repoChanged) {
+				parts.push(`Main repo updated (${repoSummary.changes} files, +${repoSummary.insertions}/-${repoSummary.deletions}).`);
+			}
+			if (submoduleChanged) parts.push('Submodule references updated.');
+			if (submoduleDetachedFixed) parts.push('Detached submodules reattached to their tracked branches.');
 			logger.info(`Updates pulled successfully! ${parts.join(' ')}`, { discord: true });
 		} else {
 			logger.success('No new updates detected');
