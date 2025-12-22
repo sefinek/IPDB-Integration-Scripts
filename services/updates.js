@@ -11,9 +11,8 @@ const repoRoot = path.resolve(__dirname, '../../');
 const pkgPath = path.resolve(repoRoot, 'package.json');
 const git = simpleGit(repoRoot);
 
-// test1
-
-const parseGitmodules = () => {
+// Parse .gitmodules to know submodule paths + their desired branches
+const parseGitModules = () => {
 	try {
 		const file = path.join(repoRoot, '.gitmodules');
 		if (!fs.existsSync(file)) return [];
@@ -26,7 +25,7 @@ const parseGitmodules = () => {
 			const line = rawLine.trim();
 			if (!line) continue;
 
-			const sectionMatch = line.match(/^\[submodule "(.*)"\]$/);
+			const sectionMatch = line.match(/^\[submodule "(.*)"\\]$/);
 			if (sectionMatch) {
 				if (current?.path) list.push({ ...current });
 				current = { name: sectionMatch[1], branch: 'main' };
@@ -54,13 +53,15 @@ const parseGitmodules = () => {
 	}
 };
 
-const SUBMODULES = parseGitmodules();
+// Capture declared submodules (path + branch) once at module init
+const SUBMODULES = parseGitModules();
 
 const getLocalVersion = () => {
 	delete require.cache[require.resolve(pkgPath)];
 	return require(pkgPath).version;
 };
 
+// Mirror .gitmodules branch definitions into .git/config
 const configureSubmoduleBranches = async () => {
 	if (!SUBMODULES.length) return;
 
@@ -69,6 +70,7 @@ const configureSubmoduleBranches = async () => {
 	}
 };
 
+// Ensure each submodule checkout matches the target branch + remote tip
 const syncSubmoduleWorktrees = async () => {
 	if (!SUBMODULES.length) return false;
 
@@ -100,10 +102,13 @@ const pull = async () => {
 			await git.reset(['--hard']);
 		}
 
-		logger.info('Pulling the repository and submodules...');
+		// 1) pull repo + sync/reattach submodules
+		logger.info('Updating repository (git pull origin main)...');
 
+		const beforeCommit = (await git.revparse(['HEAD'])).trim();
 		const submoduleStatusBefore = await git.raw(['submodule', 'status', '--recursive']);
-		const pullResult = await git.pull('origin', 'main');
+
+		await git.pull('origin', 'main');
 
 		await configureSubmoduleBranches();
 		await git.raw(['submodule', 'sync', '--recursive']);
@@ -113,20 +118,23 @@ const pull = async () => {
 		const submoduleDetachedFixed = await syncSubmoduleWorktrees();
 
 		const submoduleChanged = submoduleStatusBefore !== submoduleStatusAfter;
-		const repoSummary = pullResult.summary || { changes: 0, insertions: 0, deletions: 0 };
-		const repoChanged = pullResult.files.length > 0 || repoSummary.changes > 0 || repoSummary.insertions > 0 || repoSummary.deletions > 0;
+		const afterCommit = (await git.revparse(['HEAD'])).trim();
+		// Summarize main repo changes similar to git pull output
+		const repoSummary = afterCommit !== beforeCommit
+			? await git.diffSummary([beforeCommit, afterCommit])
+			: { files: 0, insertions: 0, deletions: 0 };
+		const repoChanged = repoSummary.files > 0;
 		const hasChanges = repoChanged || submoduleChanged || submoduleDetachedFixed;
 
 		if (hasChanges) {
+			// Compose human-friendly summary for logs / Discord
 			const parts = [];
-			if (repoChanged) {
-				parts.push(`Main repo updated (${repoSummary.changes} files, +${repoSummary.insertions}/-${repoSummary.deletions}).`);
-			}
-			if (submoduleChanged) parts.push('Submodule references updated.');
-			if (submoduleDetachedFixed) parts.push('Detached submodules reattached to their tracked branches.');
-			logger.info(`Updates pulled successfully! ${parts.join(' ')}`, { discord: true });
+			if (repoChanged) parts.push(`repo: ${repoSummary.files} files (+${repoSummary.insertions}/-${repoSummary.deletions})`);
+			if (submoduleChanged) parts.push('submodules: references updated');
+			if (submoduleDetachedFixed) parts.push('submodules: reattached to tracked branches');
+			logger.info(`Updates applied (${parts.join(', ')})`, { discord: true });
 		} else {
-			logger.success('No new updates detected');
+			logger.success('No updates detected (repo and submodules already up to date)');
 		}
 
 		return hasChanges;
@@ -154,5 +162,6 @@ const pullAndRestart = async () => {
 	}
 };
 
+// Schedule periodic update + run once at startup
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
 (async () => pullAndRestart())();
