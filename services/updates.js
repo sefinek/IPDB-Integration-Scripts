@@ -11,7 +11,7 @@ const repoRoot = path.resolve(__dirname, '../../');
 const pkgPath = path.resolve(repoRoot, 'package.json');
 const git = simpleGit(repoRoot);
 
-// test2
+// test3
 
 // Parse .gitmodules to know submodule paths + their desired branches
 const parseGitModules = () => {
