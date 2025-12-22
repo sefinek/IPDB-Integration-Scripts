@@ -15,7 +15,7 @@ const SUBMODULE_BRANCHES = (() => {
 	try {
 		const file = path.join(repoRoot, '.gitmodules');
 		if (!fs.existsSync(file)) return {};
-		// test
+		// test2
 		const lines = fs.readFileSync(file, 'utf8').split('\n');
 		const map = {};
 		let current = null;
