@@ -69,8 +69,8 @@ class Logger {
 	static async webhook(msg, levelOrHex = 0, ping = false) {
 		const isLevel = typeof levelOrHex === 'number' && levelOrHex >= 0 && levelOrHex <= 3;
 		const hex = isLevel ? this.#getLevel(levelOrHex).hex : levelOrHex;
-		const now = Date.now();
 
+		const now = Date.now();
 		if (now - webhookLastSent > WEBHOOK_COOLDOWN) webhookBurstCount = 0;
 
 		if (webhookBurstCount >= WEBHOOK_BURST_LIMIT) {
