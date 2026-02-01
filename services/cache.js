@@ -2,6 +2,7 @@ const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
 const resolvePath = require('../pathResolver.js');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
+const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
 const logger = require('../logger.js');
 
 const reportedIPs = new Map();
@@ -45,18 +46,19 @@ const loadReportedIPs = async () => {
 	}
 };
 
-const saveReportedIPs = async () => {
-	if (!RESOLVED_CACHE_FILE) return;
-	await ensureCacheDir();
-
-	try {
-		const data = Array.from(reportedIPs)
-			.map(([ip, time]) => `${ip} ${time}`)
-			.join('\n');
-		await fs.writeFile(RESOLVED_CACHE_FILE, data, 'utf8');
-	} catch (err) {
-		logger.error(`Failed to save cache file: ${err.stack}`);
-	}
+const saveReportedIPs = () => {
+	if (!RESOLVED_CACHE_FILE) return Promise.resolve();
+	return queueWrite(RESOLVED_CACHE_FILE, async () => {
+		await ensureCacheDir();
+		try {
+			const data = Array.from(reportedIPs)
+				.map(([ip, time]) => `${ip} ${time}`)
+				.join('\n');
+			await atomicWriteFile(RESOLVED_CACHE_FILE, data);
+		} catch (err) {
+			logger.error(`Failed to save cache file: ${err.stack}`);
+		}
+	});
 };
 
 const IP_REPORT_COOLDOWN_SECONDS = IP_REPORT_COOLDOWN / 1000;
