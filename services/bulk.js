@@ -58,7 +58,7 @@ const loadBufferFromFile = async () => {
 const sendBulkReport = async () => {
 	if (!BULK_REPORT_BUFFER.size) return;
 
-	logger.info(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`, { discord: true });
+	logger.info(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`);
 
 	const records = Array.from(BULK_REPORT_BUFFER.entries(), ([ip, entry]) => [
 		ip,
