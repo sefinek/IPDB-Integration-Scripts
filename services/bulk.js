@@ -5,11 +5,12 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { axiosBulk } = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
+const ABUSE_STATE = require('./state.js');
+const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
 const logger = require('../logger.js');
 
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
-const ABUSE_STATE = { isLimited: false, isBuffering: false, sentBulk: false };
 const OFFLINE_MODE = false;
 
 const ensureDirectoryExists = async filePath => {
@@ -20,7 +21,7 @@ const ensureDirectoryExists = async filePath => {
 	}
 };
 
-const saveBufferToFile = async () => {
+const saveBufferToFile = () => queueWrite(BUFFER_FILE, async () => {
 	if (!BULK_REPORT_BUFFER.size) return;
 
 	const records = [];
@@ -31,11 +32,11 @@ const saveBufferToFile = async () => {
 	try {
 		const output = stringify(records, { header: true, columns: ['IP', 'Categories', 'ReportDate', 'Comment'], quoted: true });
 		await ensureDirectoryExists(BUFFER_FILE);
-		await fs.writeFile(BUFFER_FILE, output);
+		await atomicWriteFile(BUFFER_FILE, output);
 	} catch (err) {
 		logger.error(`Failed to write buffer file: ${err.message}`, { ping: true });
 	}
-};
+});
 
 const loadBufferFromFile = async () => {
 	try {

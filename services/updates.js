@@ -1,6 +1,7 @@
 const simpleGit = require('simple-git');
 const semver = require('semver');
 const { CronJob } = require('cron');
+const fs = require('node:fs');
 const path = require('node:path');
 const restartApp = require('./reloadApp.js');
 const logger = require('../logger.js');
@@ -8,10 +9,24 @@ const { SERVER_ID, AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config
 
 const git = simpleGit();
 const pkgPath = path.resolve(__dirname, '../../package.json');
+const LOCK_FILE = path.resolve(__dirname, '../../.git/index.lock');
+const STALE_LOCK_THRESHOLD = 60_000;
 
 const getLocalVersion = () => {
 	delete require.cache[require.resolve(pkgPath)];
 	return require(pkgPath).version;
+};
+
+const cleanStaleLock = () => {
+	try {
+		const stat = fs.statSync(LOCK_FILE);
+		if (Date.now() - stat.mtimeMs > STALE_LOCK_THRESHOLD) {
+			fs.unlinkSync(LOCK_FILE);
+			logger.warn('Removed stale .git/index.lock file');
+		}
+	} catch (err) {
+		if (err.code !== 'ENOENT') logger.error(`Failed to check/remove index.lock: ${err.message}`);
+	}
 };
 
 const pull = async () => {
@@ -53,10 +68,15 @@ const pull = async () => {
 	}
 };
 
+const safePull = async () => {
+	cleanStaleLock();
+	return pull();
+};
+
 const pullAndRestart = async () => {
 	try {
 		const oldVersion = getLocalVersion();
-		const updatesAvailable = await pull();
+		const updatesAvailable = await safePull();
 		const newVersion = getLocalVersion();
 
 		if (semver.neq(newVersion, oldVersion)) {
@@ -72,4 +92,11 @@ const pullAndRestart = async () => {
 };
 
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
-(async () => pullAndRestart())();
+(async () => {
+	if (process.env.SKIP_INITIAL_PULL === '1') {
+		delete process.env.SKIP_INITIAL_PULL;
+		logger.info('Skipping initial pull after reload (SKIP_INITIAL_PULL is set)');
+		return;
+	}
+	await pullAndRestart();
+})();

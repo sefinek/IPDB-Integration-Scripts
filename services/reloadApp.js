@@ -17,10 +17,11 @@ const executeCmd = cmd => new Promise((resolve, reject) => {
 });
 
 const CMD_1 = 'npm install --omit=dev';
-const CMD_2 = (() => {
+const APP_NAME = (() => {
 	if (!ecosystem.apps?.[0]?.name) throw new Error('Missing app name in ecosystem config');
-	return `pm2 restart ${ecosystem.apps[0].name}`;
+	return ecosystem.apps[0].name;
 })();
+const CMD_2 = `pm2 reload ${APP_NAME} --update-env`;
 
 module.exports = async () => {
 	try {
@@ -29,7 +30,8 @@ module.exports = async () => {
 		const result1 = await executeCmd(CMD_1);
 		logger.info(result1, { discord: true });
 
-		// 2 - restart
+		// 2 - reload
+		process.env.SKIP_INITIAL_PULL = '1';
 		logger.info(`Running '${CMD_2}'...`);
 		const result2 = await executeCmd(CMD_2);
 		logger.info(result2, { discord: true });
