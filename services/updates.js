@@ -92,11 +92,12 @@ const pullAndRestart = async () => {
 };
 
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
-(async () => {
+module.exports = async () => {
 	if (process.env.SKIP_INITIAL_PULL === '1') {
 		delete process.env.SKIP_INITIAL_PULL;
 		logger.info('Skipping initial pull after reload (SKIP_INITIAL_PULL is set)');
 		return;
 	}
+
 	await pullAndRestart();
-})();
+};
