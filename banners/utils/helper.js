@@ -14,6 +14,6 @@ module.exports = Object.freeze({
 	reset,
 	headerText,
 	authorText,
-	donate: '💗 If you like it, consider supporting me. I\'d really appreciate it! https://sefinek.net/donate',
+	donate: '💗 If you find this project useful, consider supporting me: https://sefinek.net/donate',
 	sniffcat: '📘 Also consider reporting malicious addresses to SniffCat - a modern alternative to AbuseIPDB: https://sniffcat.com',
 });
