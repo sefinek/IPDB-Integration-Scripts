@@ -37,7 +37,7 @@ module.exports = async () => {
 			const result2 = await executeCmd(CMD_2);
 			logger.info(result2, { discord: true });
 		} else {
-			logger.info('Process is not managed by PM2. The application will now exit. Please start it again manually to apply the updates.');
+			logger.info('Process is not managed by PM2. The application will now exit. Please start it again manually to apply the updates.', { discord: true });
 			process.exit(0);
 		}
 	} catch (err) {
