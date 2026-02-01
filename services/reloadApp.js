@@ -31,10 +31,15 @@ module.exports = async () => {
 		logger.info(result1, { discord: true });
 
 		// 2 - reload
-		process.env.SKIP_INITIAL_PULL = '1';
-		logger.info(`Running '${CMD_2}'...`);
-		const result2 = await executeCmd(CMD_2);
-		logger.info(result2, { discord: true });
+		if (process.env.pm_id !== undefined) {
+			process.env.SKIP_INITIAL_PULL = '1';
+			logger.info(`Running '${CMD_2}'...`);
+			const result2 = await executeCmd(CMD_2);
+			logger.info(result2, { discord: true });
+		} else {
+			logger.info('Process is not managed by PM2. The application will now exit. Please start it again manually to apply the updates.');
+			process.exit(0);
+		}
 	} catch (err) {
 		logger.error(err.stack);
 	}
