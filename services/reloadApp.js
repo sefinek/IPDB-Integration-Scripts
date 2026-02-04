@@ -41,7 +41,7 @@ const APP_NAME = (() => {
 	if (!ecosystem.apps?.[0]?.name) throw new Error('Missing app name in ecosystem config');
 	return ecosystem.apps[0].name;
 })();
-const CMD_2 = `pm2 reload ${APP_NAME}`;
+const CMD_2 = `pm2 restart ${APP_NAME}`;
 
 module.exports = async () => {
 	try {
