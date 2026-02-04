@@ -68,36 +68,24 @@ const pull = async () => {
 	}
 };
 
-const safePull = async () => {
-	cleanStaleLock();
-	return pull();
-};
-
 const pullAndRestart = async () => {
 	try {
-		const oldVersion = getLocalVersion();
-		const updatesAvailable = await safePull();
-		const newVersion = getLocalVersion();
+		cleanStaleLock();
 
+		const oldVersion = getLocalVersion();
+		const hasChanges = await pull();
+		if (!hasChanges) return;
+
+		const newVersion = getLocalVersion();
 		if (semver.neq(newVersion, oldVersion)) {
 			logger.success(`Version changed: ${oldVersion} → ${newVersion}`, { discord: true });
-			await restartApp();
-			return;
 		}
 
-		if (updatesAvailable) await restartApp();
+		await restartApp();
 	} catch (err) {
 		logger.error(err.stack);
 	}
 };
 
 new CronJob(AUTO_UPDATE_SCHEDULE, pullAndRestart, null, true);
-module.exports = async () => {
-	if (process.env.SKIP_INITIAL_PULL === '1') {
-		delete process.env.SKIP_INITIAL_PULL;
-		logger.info('Skipping initial pull after reload (SKIP_INITIAL_PULL is set)');
-		return;
-	}
-
-	await pullAndRestart();
-};
+module.exports = pullAndRestart;
