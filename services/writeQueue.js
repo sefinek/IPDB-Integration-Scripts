@@ -12,7 +12,7 @@ const queueWrite = (filePath, fn) => {
 };
 
 const atomicWriteFile = async (filePath, data) => {
-	const tmp = filePath + '.tmp';
+	const tmp = `${filePath}.tmp`;
 	await fs.writeFile(tmp, data);
 	await fs.rename(tmp, filePath);
 };
