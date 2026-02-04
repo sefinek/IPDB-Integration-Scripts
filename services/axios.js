@@ -3,7 +3,7 @@ const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
 const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
 
-// Lazy-load logger to avoid circular dependency (logger.js requires axios.js)
+// Lazy-load logger
 let logger;
 const getLogger = () => logger || (logger = require('../logger.js'));
 
@@ -46,7 +46,17 @@ const serviceConfig = resolveServiceConfig(repoName);
 if (!serviceConfig) {
 	getLogger().log(`No matching baseURL found for repoName '${repoName}', expected one of: ${Object.keys(BASE_URLS).join(', ')}`, 3, true);
 	process.exit(1);
-} else if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
+}
+
+if (
+	(serviceConfig.serviceKey === 'sniffcat' && !SNIFFCAT_API_KEY) ||
+	(serviceConfig.serviceKey === 'abuseipdb' && !ABUSEIPDB_API_KEY) ||
+	(serviceConfig.serviceKey === 'spamverify' && !SPAMVERIFY_API_KEY)
+) {
+	throw new Error(`Missing API key for service '${serviceConfig.serviceKey}'. Please set the appropriate API key in config.js.`);
+}
+
+if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
 	getLogger().log(`Base URL: ${serviceConfig.baseURL}`);
 	getLogger().log(JSON.stringify(serviceConfig.headers));
 }
