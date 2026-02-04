@@ -3,7 +3,7 @@ const semver = require('semver');
 const { CronJob } = require('cron');
 const fs = require('node:fs');
 const path = require('node:path');
-const restartApp = require('./reloadApp.js');
+const restartApp = require('./restartApp.js');
 const logger = require('../logger.js');
 const { SERVER_ID, AUTO_UPDATE_SCHEDULE, EXTENDED_LOGS } = require('../../config.js').MAIN;
 
