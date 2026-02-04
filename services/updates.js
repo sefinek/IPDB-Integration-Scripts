@@ -22,7 +22,7 @@ const cleanStaleLock = () => {
 		const stat = fs.statSync(LOCK_FILE);
 		if (Date.now() - stat.mtimeMs > STALE_LOCK_THRESHOLD) {
 			fs.unlinkSync(LOCK_FILE);
-			logger.warn('Removed stale .git/index.lock file');
+			logger.warn('Removed stale .git/index.lock file', { discord: true });
 		}
 	} catch (err) {
 		if (err.code !== 'ENOENT') logger.error(`Failed to check/remove index.lock: ${err.message}`);
