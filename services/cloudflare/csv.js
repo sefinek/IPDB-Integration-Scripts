@@ -21,7 +21,7 @@ const CSV_STRINGIFY_OPTS = {
 const CSV_PARSE_OPTS = {
 	columns: true,
 	skip_empty_lines: true,
-	trim: true,
+	trim: false,
 	skip_records_with_empty_values: false,
 };
 
