@@ -1,7 +1,6 @@
 const fs = require('node:fs');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
-const ipSanitizer = require('../ipSanitizer.js');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
@@ -170,7 +169,7 @@ const processCowrieLogLine = async (entry, reportIp) => {
 	case 'cowrie.login.success':
 	case 'cowrie.login.failed':
 		if (session && (entry.username || entry.password)) {
-			session.credentials.set(`${ipSanitizer(entry.username)}:${ipSanitizer(entry.password)}`, true);
+			session.credentials.set(`${entry.username}:${entry.password}`, true);
 			const status = eventid === 'cowrie.login.success' ? 'Connected' : 'Failed login';
 			logger.info(`COWRIE -> ${ip}/${session.proto}/${session.dpt}: ${status} » ${entry.username}:${entry.password}`);
 		}
