@@ -41,6 +41,8 @@ class Logger {
 	static async #sendToDiscord(msg, hex, ping) {
 		if (!msg || !DISCORD_WEBHOOK_ENABLED || !DISCORD_WEBHOOK_URL) return;
 
+		if (typeof msg !== 'string') msg = msg.toString();
+
 		try {
 			const res = await axiosWebhook.post(DISCORD_WEBHOOK_URL, {
 				username: DISCORD_WEBHOOK_USERNAME === 'SERVER_ID' ? SERVER_ID : DISCORD_WEBHOOK_USERNAME || null,
