@@ -1,7 +1,6 @@
 const fs = require('node:fs');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
-const ipSanitizer = require('../ipSanitizer.js');
 const logIpToFile = require('../logIpToFile.js');
 const logger = require('../logger.js');
 const resolvePath = require('../pathResolver.js');
@@ -52,7 +51,7 @@ const parseHttpRequest = (ascii, dpt) => {
 
 	if (requestLineRaw.startsWith('POST')) {
 		const bodyContent = body.join('\n').trim();
-		if (bodyContent) output += `\nPOST Data: ${ipSanitizer(bodyContent)}`;
+		if (bodyContent) output += `\nPOST Data: ${bodyContent}`;
 	}
 
 	return output;
