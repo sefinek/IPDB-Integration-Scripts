@@ -6,12 +6,12 @@
 - [SpamVerify](https://spamverify.com/user/108395000)
 
 ## Used for
-|            | [SniffCat](https://sniffcat.com)                                             | [AbuseIPDB](https://www.abuseipdb.com/user/158699)                                    | [SpamVerify](https://spamverify.com/user/108395000)                           |
-|------------|------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|:------------------------------------------------------------------------------|
-| UFW        | [UFW-SniffCat-Reporter](https://github.com/SniffCatDB/UFW-SniffCat-Reporter) | [UFW-AbuseIPDB-Reporter](https://github.com/sefinek/UFW-AbuseIPDB-Reporter)           | [UFW-SpamVerify-Reporter](https://github.com/sefinek/UFW-SpamVerify-Reporter) |
-| Cloudflare |                                                                              | [Cloudflare-WAF-To-AbuseIPDB](https://github.com/sefinek/Cloudflare-WAF-To-AbuseIPDB) |                                                                               |
-| T-Pot      | [T-Pot-To-SniffCat](https://github.com/SniffCatDB/T-Pot-To-SniffCat)         | [T-Pot-To-AbuseIPDB](https://github.com/sefinek/T-Pot-To-AbuseIPDB)                   |                                                                               |
-| Suricata   |                                                                              | [Suricata-To-AbuseIPDB](https://github.com/sefinek/Suricata-To-AbuseIPDB)             |                                                                               |
+|            | [SniffCat](https://sniffcat.com)                                                       | [AbuseIPDB](https://www.abuseipdb.com/user/158699)                                    | [SpamVerify](https://spamverify.com/user/108395000)                           |
+|------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|:------------------------------------------------------------------------------|
+| UFW        | [UFW-SniffCat-Reporter](https://github.com/SniffCatDB/UFW-SniffCat-Reporter)           | [UFW-AbuseIPDB-Reporter](https://github.com/sefinek/UFW-AbuseIPDB-Reporter)           | [UFW-SpamVerify-Reporter](https://github.com/sefinek/UFW-SpamVerify-Reporter) |
+| Cloudflare | [Cloudflare-WAF-To-SniffCat](https://github.com/SniffCatDB/Cloudflare-WAF-To-SniffCat) | [Cloudflare-WAF-To-AbuseIPDB](https://github.com/sefinek/Cloudflare-WAF-To-AbuseIPDB) |                                                                               |
+| T-Pot      | [T-Pot-To-SniffCat](https://github.com/SniffCatDB/T-Pot-To-SniffCat)                   | [T-Pot-To-AbuseIPDB](https://github.com/sefinek/T-Pot-To-AbuseIPDB)                   |                                                                               |
+| Suricata   | Soon                                                                                   | [Suricata-To-AbuseIPDB](https://github.com/sefinek/Suricata-To-AbuseIPDB)             |                                                                               |
 
 ## Terms
 | Key         | Description                                          |
