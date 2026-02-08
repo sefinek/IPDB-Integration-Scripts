@@ -9,7 +9,6 @@ const url = `https://github.com/${slug}`;
 const nameMappings = {
 	sniffcat: 'SniffCat',
 	abuseipdb: 'AbuseIPDB',
-	spamverify: 'SpamVerify',
 };
 
 const getPrettyName = repo => {
