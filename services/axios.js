@@ -1,7 +1,7 @@
 const axios = require('axios');
 const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
-const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SPAMVERIFY_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
+const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
 
 // Lazy-load logger
 let logger;
@@ -16,14 +16,12 @@ const DEFAULT_HEADERS = {
 
 const HEADERS = {
 	json: { ...DEFAULT_HEADERS, 'Content-Type': 'application/json' },
-	form: { ...DEFAULT_HEADERS, 'Content-Type': 'application/x-www-form-urlencoded' },
 	multipart: { ...DEFAULT_HEADERS, 'Content-Type': 'multipart/form-data' },
 };
 
 const SERVICE_HEADERS = {
 	sniffcat: { ...HEADERS.json, 'X-Secret-Token': SNIFFCAT_API_KEY },
-	abuseipdb: { ...HEADERS.form, Key: ABUSEIPDB_API_KEY },
-	spamverify: { ...HEADERS.json, 'Api-Key': SPAMVERIFY_API_KEY },
+	abuseipdb: { ...HEADERS.json, Key: ABUSEIPDB_API_KEY },
 	sefinek: { ...DEFAULT_HEADERS, 'X-API-Key': SEFIN_API_SECRET_TOKEN },
 	cloudflare: { ...HEADERS.json, Authorization: `Bearer ${CLOUDFLARE_API_KEY}` },
 };
@@ -31,7 +29,6 @@ const SERVICE_HEADERS = {
 const BASE_URLS = {
 	sniffcat: 'https://api.sniffcat.com/api/v1',
 	abuseipdb: 'https://api.abuseipdb.com/api/v2',
-	spamverify: 'https://api.spamverify.com/v1/ip',
 };
 
 const resolveServiceConfig = str => {
@@ -50,8 +47,7 @@ if (!serviceConfig) {
 
 if (
 	(serviceConfig.serviceKey === 'sniffcat' && !SNIFFCAT_API_KEY) ||
-	(serviceConfig.serviceKey === 'abuseipdb' && !ABUSEIPDB_API_KEY) ||
-	(serviceConfig.serviceKey === 'spamverify' && !SPAMVERIFY_API_KEY)
+	(serviceConfig.serviceKey === 'abuseipdb' && !ABUSEIPDB_API_KEY)
 ) {
 	throw new Error(`Missing API key for service '${serviceConfig.serviceKey}'. Please set the appropriate API key in config.js.`);
 }
@@ -102,7 +98,7 @@ const retryOptions = {
 
 module.exports = Object.freeze({
 	axiosGeneric, // Generic client without baseURL
-	axiosService, // Main client for SniffCat, AbuseIPDB, SpamVerify
+	axiosService, // Main client for SniffCat, AbuseIPDB
 	axiosBulk, // Bulk client with multipart/form-data (CSV upload) for SniffCat and AbuseIPDB
 	axiosSefinek, // Client for Sefinek API
 	axiosWebhook, // Client for Discord webhooks
