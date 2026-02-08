@@ -143,38 +143,11 @@ const MAPPINGS = Object.freeze({
 		['SSH', 22],
 		['IOT_TARGETED', 23],
 	]),
-	SpamVerify: new Map([
-		['DNS_COMPROMISE', 1],
-		['DNS_POISONING', 2],
-		['FRAUD_ORDERS', 3],
-		['DDOS_ATTACK', 4],
-		['OPEN_PROXY', 5],
-		['WEB_SPAM', 6],
-		['EMAIL_SPAM', 7],
-		['PORT_SCAN', 8],
-		['SPOOFING', 9],
-		['BRUTE_FORCE', 10],
-		['BAD_WEB_BOT', 11],
-		['EXPLOITED_HOST', 12],
-		['WEB_APP_ATTACK', 13],
-		['SSH', 14],
-		['IOT_TARGETED', 15],
-		['FTP', 16],
-		['PING_OF_DEATH', 17],
-		['PHISHING', 18],
-		['FRAUD_VOIP', 19],
-		['BLOG_SPAM', 20],
-		['VPN_IP', 21],
-		['HACKING', 22],
-		['SQL_INJECTION', 23],
-		['IGNORING_ROBOTS_TXT', 24],
-	]),
 });
 
 const FALLBACK_IDS = {
 	SniffCat: MAPPINGS.SniffCat.get(FLAGS.OTHER_ABUSE),
 	AbuseIPDB: MAPPINGS.AbuseIPDB.get(FLAGS.HACKING),
-	SpamVerify: MAPPINGS.SpamVerify.get(FLAGS.HACKING),
 };
 
 const createFlagCollection = () => {
