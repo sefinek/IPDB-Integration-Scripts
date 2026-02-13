@@ -99,7 +99,7 @@ module.exports = reportIp => {
 				const { proto, timestamp, categories, comment } = getReportDetails(entry, dpt);
 				await reportIp('DIONAEA', { srcIp, dpt, proto, timestamp }, categories, comment);
 
-				logIpToFile(srcIp, { honeypot: 'DIONAEA', comment });
+				await logIpToFile(srcIp, { honeypot: 'DIONAEA', comment });
 			} catch (err) {
 				logger.error(err);
 			}

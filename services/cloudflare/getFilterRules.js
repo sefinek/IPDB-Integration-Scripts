@@ -17,6 +17,6 @@ module.exports = async () => {
 		logger.success(`Filter rules loaded from api.sefinek.net, last update: ${lastUpdate}`);
 		return { userAgents, domains, endpoints, imgExtensions, lastUpdate };
 	} catch (err) {
-		throw new Error(`Failed to fetch filter rules: ${err.message}`);
+		throw new Error(`Failed to fetch filter rules: ${err.message}`, { cause: err });
 	}
 };
