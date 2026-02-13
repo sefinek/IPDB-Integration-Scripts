@@ -6,7 +6,7 @@
 //  To add custom signatures, use the IGNORED_SIGNATURES array in your config.js file.
 //  To disable this built-in list entirely, set USE_BUILT_IN_IGNORED_SIGNATURES to false.
 //
-//  Last modified: 5.02.2026
+//  Last modified: 13.02.2026
 // =====================================================================================================================
 
 const { USE_BUILT_IN_IGNORED_SIGNATURES, IGNORED_SIGNATURES } = require('../../config.js').MAIN;
@@ -38,6 +38,11 @@ const GLOBAL_IGNORED = {
 	// Cloudflare Tunnel (argotunnel.com)
 	// ==========================
 	2047122: 'ET INFO Cloudflare Argo Tunnel Domain',
+
+	// ==========================
+	// Xiaomi
+	// ==========================
+	2018918: 'ET INFO possible Xiaomi phone data leakage DNS',
 };
 
 const localIgnored = new Set(IGNORED_SIGNATURES || []);
