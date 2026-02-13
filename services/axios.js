@@ -65,11 +65,11 @@ const resolveBulkHeaders = serviceKey => {
 
 // Axios instances
 const axiosGeneric = axios.create({ timeout: 20000, headers: DEFAULT_HEADERS });
-const axiosService = axios.create({ baseURL: serviceConfig.baseURL, timeout: 25000, headers: serviceConfig.headers });
-const axiosBulk = axios.create({ baseURL: serviceConfig.baseURL, timeout: 60000, headers: resolveBulkHeaders(serviceConfig.serviceKey) });
-const axiosSefinek = axios.create({ timeout: 25000, headers: SERVICE_HEADERS.sefinek });
+const axiosService = axios.create({ baseURL: serviceConfig.baseURL, timeout: 30000, headers: serviceConfig.headers });
+const axiosBulk = axios.create({ baseURL: serviceConfig.baseURL, timeout: 55000, headers: resolveBulkHeaders(serviceConfig.serviceKey) });
+const axiosSefinek = axios.create({ timeout: 35000, headers: SERVICE_HEADERS.sefinek });
 const axiosWebhook = axios.create({ timeout: 15000, headers: DEFAULT_HEADERS });
-const axiosCloudflare = axios.create({ baseURL: 'https://api.cloudflare.com/client/v4', timeout: 25000, headers: SERVICE_HEADERS.cloudflare });
+const axiosCloudflare = axios.create({ baseURL: 'https://api.cloudflare.com/client/v4', timeout: 30000, headers: SERVICE_HEADERS.cloudflare });
 
 // Retry options
 const retryOptions = {
