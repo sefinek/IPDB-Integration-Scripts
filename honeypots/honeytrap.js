@@ -118,7 +118,7 @@ const flushBuffer = async reportIp => {
 		const comment = `Honeypot ${SERVER_ID ? `[${SERVER_ID}]` : 'hit'}: ${baseComment.replace(/ on \d+\/\w+/, '')}; ${portSummary} ${proto.toUpperCase()}`;
 
 		await reportIp('HONEYTRAP', { srcIp, dpt: sortedPorts[0][0], proto, timestamp }, categories, comment);
-		logIpToFile(srcIp, { honeypot: 'HONEYTRAP', comment });
+		await logIpToFile(srcIp, { honeypot: 'HONEYTRAP', comment });
 	}
 
 	logger.success(`HONEYTRAP -> Flushed ${attackBuffer.size} IPs`);
