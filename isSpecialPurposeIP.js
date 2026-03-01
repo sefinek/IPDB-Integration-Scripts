@@ -9,8 +9,8 @@ const LOCAL_RANGES = new Set([
 module.exports = ip => {
 	try {
 		const range = ipaddr.parse(ip).range();
-		return LOCAL_RANGES.has(range);
+		return { is: LOCAL_RANGES.has(range), range };
 	} catch {
-		return false;
+		return { is: false, range: null };
 	}
 };

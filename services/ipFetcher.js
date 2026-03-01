@@ -14,7 +14,7 @@ const fetchLocalIPs = () => {
 	for (const ifaceList of Object.values(networkInterfaces())) {
 		for (const iface of ifaceList) {
 			const addr = iface?.address;
-			if (addr && !iface.internal && !isSpecialPurposeIP(addr)) ipAddresses.add(addr);
+			if (addr && !iface.internal && !isSpecialPurposeIP(addr).is) ipAddresses.add(addr);
 		}
 	}
 };
