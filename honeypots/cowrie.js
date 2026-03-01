@@ -1,8 +1,6 @@
-const fs = require('node:fs');
-const TailFile = require('@logdna/tail-file');
-const split2 = require('split2');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
+const tailFile = require('../services/tailFile.js');
 const logger = require('../logger.js');
 const resolvePath = require('../pathResolver.js');
 const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -226,32 +224,22 @@ const processCowrieLogLine = async (entry, reportIp) => {
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.error(`COWRIE -> Log file not found: ${LOG_FILE}`, { ping: true });
+	tailFile(LOG_FILE, async line => {
+		if (!line.length) return;
 
-	const tail = new TailFile(LOG_FILE);
-	tail
-		.on('tail_error', err => logger.error(err))
-		.start()
-		.catch(err => logger.error(err));
+		let entry;
+		try {
+			entry = JSON.parse(line);
+		} catch (err) {
+			return logger.error(`COWRIE -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
+		}
 
-	tail
-		.pipe(split2())
-		.on('data', async line => {
-			if (!line.length) return;
-
-			let entry;
-			try {
-				entry = JSON.parse(line);
-			} catch (err) {
-				return logger.error(`COWRIE -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
-			}
-
-			try {
-				await processCowrieLogLine(entry, reportIp);
-			} catch (err) {
-				logger.error(err);
-			}
-		});
+		try {
+			await processCowrieLogLine(entry, reportIp);
+		} catch (err) {
+			logger.error(err);
+		}
+	}, { label: 'COWRIE' }).catch(err => logger.error(err));
 
 	// Clean buffer
 	const cleanupInterval = setInterval(() => {
@@ -267,7 +255,6 @@ module.exports = reportIp => {
 
 	logger.success('🛡️ COWRIE » Watcher initialized');
 	return {
-		tail,
 		flush: async () => {
 			for (const ip of ipBuffers.keys()) {
 				await flushBuffer(ip, reportIp);
