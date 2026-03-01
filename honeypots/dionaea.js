@@ -1,8 +1,6 @@
-const fs = require('node:fs');
-const TailFile = require('@logdna/tail-file');
-const split2 = require('split2');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 const logIpToFile = require('../logIpToFile.js');
+const tailFile = require('../services/tailFile.js');
 const logger = require('../logger.js');
 const resolvePath = require('../pathResolver.js');
 const { DIONAEA_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -71,46 +69,29 @@ const getReportDetails = (entry, dpt) => {
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.error(`DIONAEA -> Log file not found: ${LOG_FILE}`, { ping: true });
+	tailFile(LOG_FILE, async line => {
+		if (!line.length) return;
 
-	const tail = new TailFile(LOG_FILE);
-	tail
-		.on('tail_error', err => logger.error(err))
-		.start()
-		.catch(err => logger.error(err));
+		let entry;
+		try {
+			entry = JSON.parse(line);
+		} catch (err) {
+			return logger.error(`DIONAEA -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
+		}
 
-	tail
-		.pipe(split2())
-		.on('data', async line => {
-			if (!line.length) return;
+		try {
+			const srcIp = entry?.src_ip;
+			const dpt = entry?.dst_port;
+			if (!srcIp || !dpt) return;
 
-			let entry;
-			try {
-				entry = JSON.parse(line);
-			} catch (err) {
-				return logger.error(`DIONAEA -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
-			}
+			const { proto, timestamp, categories, comment } = getReportDetails(entry, dpt);
+			await reportIp('DIONAEA', { srcIp, dpt, proto, timestamp }, categories, comment);
 
-			try {
-				const srcIp = entry?.src_ip;
-				const dpt = entry?.dst_port;
-				if (!srcIp || !dpt) return;
-
-				const { proto, timestamp, categories, comment } = getReportDetails(entry, dpt);
-				await reportIp('DIONAEA', { srcIp, dpt, proto, timestamp }, categories, comment);
-
-				await logIpToFile(srcIp, { honeypot: 'DIONAEA', comment });
-			} catch (err) {
-				logger.error(err);
-			}
-		});
+			await logIpToFile(srcIp, { honeypot: 'DIONAEA', comment });
+		} catch (err) {
+			logger.error(err);
+		}
+	}, { label: 'DIONAEA' }).catch(err => logger.error(err));
 
 	logger.success('🛡️ DIONAEA » Watcher initialized');
-	return {
-		tail,
-		flush: () => null,
-		cleanup: () => {
-			// No intervals to clean, but included for consistency
-		},
-	};
 };

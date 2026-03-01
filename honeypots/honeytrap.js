@@ -1,7 +1,5 @@
-const fs = require('node:fs');
-const TailFile = require('@logdna/tail-file');
-const split2 = require('split2');
 const logIpToFile = require('../logIpToFile.js');
+const tailFile = require('../services/tailFile.js');
 const logger = require('../logger.js');
 const resolvePath = require('../pathResolver.js');
 const { HONEYTRAP_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
@@ -126,51 +124,41 @@ const flushBuffer = async reportIp => {
 };
 
 module.exports = reportIp => {
-	if (!fs.existsSync(LOG_FILE)) return logger.error(`HONEYTRAP -> Log file not found: ${LOG_FILE}`, { ping: true });
+	tailFile(LOG_FILE, async line => {
+		if (!line.length) return;
 
-	const tail = new TailFile(LOG_FILE);
-	tail
-		.on('tail_error', err => logger.error(err))
-		.start()
-		.catch(err => logger.error(err));
+		let entry;
+		try {
+			entry = JSON.parse(line);
+		} catch (err) {
+			return logger.error(`HONEYTRAP -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
+		}
 
-	tail
-		.pipe(split2())
-		.on('data', async line => {
-			if (!line.length) return;
+		try {
+			const srcIp = entry?.attack_connection?.remote_ip;
+			const dpt = entry?.attack_connection?.local_port;
+			if (!srcIp || !dpt) return;
 
-			let entry;
-			try {
-				entry = JSON.parse(line);
-			} catch (err) {
-				return logger.error(`HONEYTRAP -> JSON parse error: ${err.message}\nFaulty line: ${JSON.stringify(line)}`);
+			let ipData = attackBuffer.get(srcIp);
+			if (!ipData) {
+				ipData = new Map();
+				attackBuffer.set(srcIp, ipData);
 			}
 
-			try {
-				const srcIp = entry?.attack_connection?.remote_ip;
-				const dpt = entry?.attack_connection?.local_port;
-				if (!srcIp || !dpt) return;
-
-				let ipData = attackBuffer.get(srcIp);
-				if (!ipData) {
-					ipData = new Map();
-					attackBuffer.set(srcIp, ipData);
-				}
-
-				const { proto, timestamp, categories, baseComment } = getReportDetails(entry, dpt);
-				let portData = ipData.get(dpt);
-				if (portData) {
-					portData.count++;
-				} else {
-					portData = { count: 1, proto, timestamp, categories, baseComment };
-					ipData.set(dpt, portData);
-				}
-
-				logger.info(`HONEYTRAP -> ${srcIp} hit ${dpt} | x${portData.count}`);
-			} catch (err) {
-				logger.error(err);
+			const { proto, timestamp, categories, baseComment } = getReportDetails(entry, dpt);
+			let portData = ipData.get(dpt);
+			if (portData) {
+				portData.count++;
+			} else {
+				portData = { count: 1, proto, timestamp, categories, baseComment };
+				ipData.set(dpt, portData);
 			}
-		});
+
+			logger.info(`HONEYTRAP -> ${srcIp} hit ${dpt} | x${portData.count}`);
+		} catch (err) {
+			logger.error(err);
+		}
+	}, { label: 'HONEYTRAP' }).catch(err => logger.error(err));
 
 	// Clean buffer
 	const cleanupInterval = setInterval(async () => {
@@ -182,7 +170,6 @@ module.exports = reportIp => {
 
 	logger.success('🛡️ HONEYTRAP » Watcher initialized');
 	return {
-		tail,
 		flush: () => flushBuffer(reportIp),
 		cleanup: () => {
 			clearInterval(cleanupInterval);

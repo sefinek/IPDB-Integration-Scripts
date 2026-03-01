@@ -1,5 +1,4 @@
 const axios = require('axios');
-const axiosRetry = require('axios-retry').default;
 const { version, repoName, repoUrl } = require('../repo.js');
 const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
 
@@ -45,13 +44,6 @@ if (!serviceConfig) {
 	process.exit(1);
 }
 
-if (
-	(serviceConfig.serviceKey === 'sniffcat' && !SNIFFCAT_API_KEY) ||
-	(serviceConfig.serviceKey === 'abuseipdb' && !ABUSEIPDB_API_KEY)
-) {
-	throw new Error(`Missing API key for service '${serviceConfig.serviceKey}'. Please set the appropriate API key in config.js.`);
-}
-
 if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
 	getLogger().log(`Base URL: ${serviceConfig.baseURL}`);
 	getLogger().log(JSON.stringify(serviceConfig.headers));
@@ -71,30 +63,35 @@ const axiosSefinek = axios.create({ timeout: 35000, headers: SERVICE_HEADERS.sef
 const axiosWebhook = axios.create({ timeout: 15000, headers: DEFAULT_HEADERS });
 const axiosCloudflare = axios.create({ baseURL: 'https://api.cloudflare.com/client/v4', timeout: 30000, headers: SERVICE_HEADERS.cloudflare });
 
-// Retry options
-const retryOptions = {
-	retries: 3,
-	retryDelay: count => count * 7000,
-	retryCondition: err =>
-		['ECONNABORTED', 'ENOTFOUND'].includes(err.code) ||
-		err.response?.status >= 500,
-	onRetry: (count, err, config) => {
+// Retry interceptor
+const MAX_RETRIES = 3;
+const RETRY_DELAY = count => count * 7000;
+const RETRYABLE_CODES = new Set(['ECONNABORTED', 'ENOTFOUND', 'ETIMEDOUT']);
+const isRetryable = err =>
+	RETRYABLE_CODES.has(err.code) ||
+	err.response?.status >= 500;
+const hasStream = config => config.data && typeof config.data.pipe === 'function';
+
+const applyRetry = instance => {
+	instance.interceptors.response.use(null, async err => {
+		const config = err.config;
+		if (!config) throw err;
+
+		config.__retryCount ??= 0;
+		if (config.__retryCount >= MAX_RETRIES || !isRetryable(err) || hasStream(config)) throw err;
+
+		config.__retryCount++;
 		const status = err.response?.status
 			? `Status ${err.response.status}`
 			: err.code || err.message || 'Unknown error';
-		getLogger().log(`${status} - retry #${count} for ${config.url}`, 2);
-	},
+		getLogger().log(`${status} - retry #${config.__retryCount} for ${config.url}`, 2);
+
+		await new Promise(resolve => setTimeout(resolve, RETRY_DELAY(config.__retryCount)));
+		return instance(config);
+	});
 };
 
-// Apply retry to all
-[
-	axiosGeneric,
-	axiosService,
-	axiosBulk,
-	axiosSefinek,
-	axiosWebhook,
-	axiosCloudflare,
-].forEach(instance => axiosRetry(instance, retryOptions));
+[axiosGeneric, axiosService, axiosBulk, axiosSefinek, axiosWebhook, axiosCloudflare].forEach(applyRetry);
 
 module.exports = Object.freeze({
 	axiosGeneric, // Generic client without baseURL
