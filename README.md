@@ -2,7 +2,7 @@
 
 ## Supported Services
 - [SniffCat](https://sniffcat.com)
-- [SpamVerify](https://spamverify.com/user/108395000)
+- [AbuseIPDB](https://www.abuseipdb.com/user/158699)
 
 ## Used for
 |            | [SniffCat](https://sniffcat.com)                                                       | [AbuseIPDB](https://www.abuseipdb.com/user/158699)                                    |
