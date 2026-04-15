@@ -1,4 +1,4 @@
-# Integration Scripts
+# 🔧 Integration Scripts
 
 ## Supported Services
 - [SniffCat](https://sniffcat.com)
