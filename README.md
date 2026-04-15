@@ -5,7 +5,7 @@
 - [AbuseIPDB](https://www.abuseipdb.com/user/158699)
 
 ## Used for
-|            | [SniffCat](https://sniffcat.com)                                                       | [AbuseIPDB](https://www.abuseipdb.com/user/158699)                                    |
+|            | [SniffCat](https://sniffcat.com/users/681e779a3e78a7a67816b8a2)                        | [AbuseIPDB](https://www.abuseipdb.com/user/158699)                                    |
 |------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | UFW        | [UFW-SniffCat-Reporter](https://github.com/SniffCatDB/UFW-SniffCat-Reporter)           | [UFW-AbuseIPDB-Reporter](https://github.com/sefinek/UFW-AbuseIPDB-Reporter)           |
 | Cloudflare | [Cloudflare-WAF-To-SniffCat](https://github.com/SniffCatDB/Cloudflare-WAF-To-SniffCat) | [Cloudflare-WAF-To-AbuseIPDB](https://github.com/sefinek/Cloudflare-WAF-To-AbuseIPDB) |
