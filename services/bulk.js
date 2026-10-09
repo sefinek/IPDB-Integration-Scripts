@@ -7,6 +7,7 @@ const { axiosBulk } = require('../services/axios.js');
 const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
 const ABUSE_STATE = require('./state.js');
 const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
+const { truncateComment } = require('../comment.js');
 const logger = require('../logger.js');
 
 const BULK_REPORT_BUFFER = new Map();
@@ -64,7 +65,7 @@ const sendBulkReport = async () => {
 		ip,
 		entry.categories,
 		new Date(entry.timestamp ?? Date.now()).toISOString(),
-		entry.comment ? (entry.comment.length > 1024 ? entry.comment.substring(0, 1021) + '...' : entry.comment) : '',
+		truncateComment(entry.comment || ''),
 	]);
 
 	const sendChunk = async (chunk, index = 0, total = 1) => {

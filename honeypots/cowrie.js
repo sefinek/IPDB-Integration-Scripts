@@ -1,4 +1,5 @@
 const { FLAGS, createFlagCollection } = require('../flags.js');
+const { MAX_COMMENT_LENGTH, joinWithinLimit } = require('../comment.js');
 const logIpToFile = require('../logIpToFile.js');
 const tailFile = require('../services/tailFile.js');
 const logger = require('../logger.js');
@@ -8,7 +9,9 @@ const { COWRIE_LOG_FILE, SERVER_ID } = require('../../config.js').MAIN;
 const LOG_FILE = resolvePath(COWRIE_LOG_FILE);
 const REPORT_DELAY = SERVER_ID === 'development' ? 30 * 1000 : 10 * 60 * 1000;
 
-const CREDS_LIMIT = 885;
+// Leaves room for footers appended by reportIp (e.g. "Reported by: <repo url>"); reportIp still enforces the hard limit
+const COMMENT_BUDGET = MAX_COMMENT_LENGTH - 100;
+const MIN_CREDS_LENGTH = 64;
 const ipBuffers = new Map();
 
 const extractSessionData = sessions => {
@@ -64,27 +67,24 @@ const extractSessionData = sessions => {
 const buildComment = ({ serverId, dpt, proto, creds, commands, sshVersion, downloadUrls, fingerprints, uploads, tunnels }, full = false) => {
 	const loginAttempts = creds.length;
 	const cmdCount = commands.length;
-	const lines = [];
 
-	lines.push(`Honeypot ${serverId ? `[${serverId}]` : 'hit'}: ${loginAttempts ? 'Brute-force attack' : 'Unauthorized connection attempt'} detected on ${dpt}/${proto.toUpperCase()}`);
+	const header = `Honeypot ${serverId ? `[${serverId}]` : 'hit'}: ${loginAttempts ? 'Brute-force attack' : 'Unauthorized connection attempt'} detected on ${dpt}/${proto.toUpperCase()}`;
+	const details = [];
+	if (loginAttempts) details.push(`• Number of login attempts: ${loginAttempts}`);
+	if (cmdCount) details.push(`• ${cmdCount} command(s) were executed during the session`);
+	if (sshVersion) details.push(`• Client: ${sshVersion}`);
+	if (downloadUrls.length) details.push(`• Suspicious file URLs: ${downloadUrls.join(', ')}`);
+	if (fingerprints.length) details.push(`• SSH key fingerprints: ${fingerprints.join(', ')}`);
+	if (uploads.length) details.push(`• Uploaded files: ${uploads.join(', ')}`);
+	if (tunnels.length) details.push(`• TCP tunnels: ${tunnels.join(', ')}`);
 
-	if (loginAttempts === 1) {
-		lines.push(`• Credential used: ${creds[0]}`);
-	} else if (loginAttempts > 1) {
-		let joined = creds.join(', ');
-		if (!full && joined.length > CREDS_LIMIT) joined = joined.slice(0, CREDS_LIMIT).replace(/,[^,]*$/, '') + '...';
-		lines.push(`• Credentials: ${joined}`);
-	}
+	if (!loginAttempts) return [header, ...details].join('\n');
 
-	if (loginAttempts) lines.push(`• Number of login attempts: ${loginAttempts}`);
-	if (cmdCount) lines.push(`• ${cmdCount} command(s) were executed during the session`);
-	if (sshVersion) lines.push(`• Client: ${sshVersion}`);
-	if (downloadUrls.length) lines.push(`• Suspicious file URLs: ${downloadUrls.join(', ')}`);
-	if (fingerprints.length) lines.push(`• SSH key fingerprints: ${fingerprints.join(', ')}`);
-	if (uploads.length) lines.push(`• Uploaded files: ${uploads.join(', ')}`);
-	if (tunnels.length) lines.push(`• TCP tunnels: ${tunnels.join(', ')}`);
+	const label = loginAttempts === 1 ? '• Credential used: ' : '• Credentials: ';
+	const credsBudget = COMMENT_BUDGET - [header, ...details].join('\n').length - label.length - 1;
+	const credsText = full ? creds.join(', ') : joinWithinLimit(creds, Math.max(credsBudget, MIN_CREDS_LENGTH));
 
-	return lines.join('\n');
+	return [header, `${label}${credsText}`, ...details].join('\n');
 };
 
 const flushBuffer = async (srcIp, reportIp) => {
