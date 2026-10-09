@@ -1,4 +1,4 @@
-const simpleGit = require('simple-git');
+const { simpleGit } = require('simple-git');
 const semver = require('semver');
 const { CronJob } = require('cron');
 const fs = require('node:fs');
