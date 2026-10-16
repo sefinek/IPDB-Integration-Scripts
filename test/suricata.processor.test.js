@@ -14,12 +14,11 @@ const deferred = () => {
 };
 
 // Minimal policy: the event's src_ip is the offender, the evidence is the event itself
-const policy = (mode = 'report') => ({
-	mode,
-	evaluate: event => (event?.event_type === 'alert' ? { srcIp: event.src_ip.replace('::ffff:', ''), evidence: event } : null),
+const policy = () => ({
+	evaluate: event => (event?.event_type === 'alert' ? { srcIp: event.src_ip.replace('::ffff:', ''), review: Boolean(event.review), evidence: event } : null),
 });
 
-const line = ip => JSON.stringify({ event_type: 'alert', src_ip: ip });
+const line = (ip, extra = {}) => JSON.stringify({ event_type: 'alert', src_ip: ip, ...extra });
 
 const setup = (options = {}) => {
 	const marked = new Set(), reports = [], reviews = [], deferredData = [];
@@ -99,12 +98,14 @@ test('a report error is logged and does not block the IP', async () => {
 	assert.ok(s.marked.has('8.8.8.8'));
 });
 
-test('review mode only logs', async () => {
-	const s = setup({ policy: policy('review') });
-	await s.processor.processLine(line('8.8.8.8'));
+test('alerts matched by a rule in review are only logged', async () => {
+	const s = setup();
+	await s.processor.processLine(line('8.8.8.8', { review: true }));
+	await s.processor.processLine(line('9.9.9.9'));
 
 	assert.deepEqual(s.reviews, ['8.8.8.8']);
-	assert.deepEqual(s.reports, []);
+	assert.deepEqual(s.reports, ['9.9.9.9']);
+	assert.equal(s.marked.has('8.8.8.8'), false);
 });
 
 test('non-alert, malformed and test lines are handled without reporting', async () => {
@@ -123,7 +124,6 @@ test('the policy is evaluated again before a queued report is sent', async () =>
 	const s = setup({
 		maxConcurrent: 1,
 		policy: {
-			mode: 'report',
 			evaluate: event => (blocked && event.src_ip === '9.9.9.9' ? null : policy().evaluate(event)),
 		},
 		report: async data => {

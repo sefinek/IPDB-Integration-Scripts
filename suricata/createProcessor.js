@@ -70,7 +70,7 @@ module.exports = ({
 		if (!data) return;
 		if (test) return data;
 
-		if (policy.mode === 'review') return logReview(data);
+		if (data.review) return logReview(data);
 
 		if (isReportedRecently(data.srcIp)) return logSkip?.(`${data.srcIp} was reported recently`);
 		if (pending.has(data.srcIp)) return pending.get(data.srcIp);

@@ -2,7 +2,6 @@ const normalizeIP = require('../normalizeIP.js');
 const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
 const { FLAGS, createFlagCollection } = require('../flags.js');
 
-const REPORT_MODES = ['review', 'report'];
 const OFFENDERS = ['src', 'dest'];
 const MAX_CLOCK_SKEW = 5 * 60 * 1000;
 
@@ -10,30 +9,28 @@ const isPositiveInteger = value => Number.isSafeInteger(value) && value > 0;
 const isFlag = value => Object.hasOwn(FLAGS, value);
 
 // Rules use flags instead of category IDs, so the same config works for every supported service (AbuseIPDB, SniffCat)
-const parseRules = (reportRules = [], mode) => {
+const parseRules = (reportRules = []) => {
 	if (!Array.isArray(reportRules)) throw new Error('REPORT_RULES must be an array');
 
 	const rules = new Map();
 	for (const rule of reportRules) {
-		const { signatureId, offender, flags } = rule ?? {};
+		const { signatureId, offender, flags, review = false } = rule ?? {};
 		if (!isPositiveInteger(signatureId)) throw new Error(`REPORT_RULES: invalid signatureId ${signatureId}`);
 		if (rules.has(signatureId)) throw new Error(`REPORT_RULES: duplicate signatureId ${signatureId}`);
 		if (!OFFENDERS.includes(offender)) throw new Error(`REPORT_RULES: offender for ${signatureId} must be 'src' or 'dest'`);
 		if (!Array.isArray(flags) || !flags.length || !flags.every(isFlag)) throw new Error(`REPORT_RULES: flags for ${signatureId} must be a non-empty array of FLAGS from scripts/flags.js`);
+		if (typeof review !== 'boolean') throw new Error(`REPORT_RULES: review for ${signatureId} must be a boolean`);
 
-		rules.set(signatureId, { offender, categories: createFlagCollection().add(...flags).toString() });
+		rules.set(signatureId, { offender, review, categories: createFlagCollection().add(...flags).toString() });
 	}
 
-	if (mode === 'report' && !rules.size) throw new Error('REPORT_RULES must not be empty in report mode');
 	return rules;
 };
 
 module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = () => false, isIgnored = () => false, now = Date.now }) => {
-	const mode = config.REPORT_MODE ?? 'review';
-	if (!REPORT_MODES.includes(mode)) throw new Error(`REPORT_MODE must be one of: ${REPORT_MODES.join(', ')}`);
 	if (typeof isHomeNet !== 'function') throw new Error('isHomeNet must be a function');
 
-	const rules = parseRules(config.REPORT_RULES, mode);
+	const rules = parseRules(config.REPORT_RULES);
 	const minSeverity = config.MIN_ALERT_SEVERITY;
 	const verdicts = config.ALLOWED_VERDICT_ACTIONS ?? ['alert', 'drop'];
 
@@ -104,9 +101,13 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 			signature,
 			timestamp,
 			categories: rule.categories,
+			review: rule.review,
 			evidence,
 		};
 	};
 
-	return Object.freeze({ mode, evaluate, canReportIP });
+	const ruleCount = { report: 0, review: 0 };
+	for (const rule of rules.values()) ruleCount[rule.review ? 'review' : 'report']++;
+
+	return Object.freeze({ evaluate, canReportIP, ruleCount: Object.freeze(ruleCount) });
 };

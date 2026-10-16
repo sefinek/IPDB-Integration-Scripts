@@ -9,7 +9,6 @@ const createPolicy = require('../suricata/reportPolicy.js');
 const homeNet = parseHomeNet('[10.0.0.0/8,2a01:11bf:4404:9000::/56]');
 
 const CONFIG = {
-	REPORT_MODE: 'report',
 	REPORT_RULES: [{ signatureId: 100, offender: 'src', flags: ['PORT_SCAN', 'HACKING'] }],
 	MIN_ALERT_SEVERITY: 2,
 	ALLOWED_VERDICT_ACTIONS: ['alert', 'drop'],
@@ -134,23 +133,35 @@ test('skip reasons are reported only when requested', () => {
 	assert.match(reasons[0], /999 has no entry in REPORT_RULES/);
 });
 
-test('review is the default mode and allows empty rules', () => {
-	const policy = policyFor({ REPORT_MODE: undefined, REPORT_RULES: undefined });
-	assert.equal(policy.mode, 'review');
-	assert.equal(policy.evaluate(event()), null);
+test('rules in review are marked, so they are only logged', () => {
+	const policy = policyFor({ REPORT_RULES: [{ signatureId: 100, offender: 'src', flags: ['PORT_SCAN'], review: true }] });
+	assert.equal(policy.evaluate(event()).review, true);
+	assert.equal(policyFor().evaluate(event()).review, false);
+});
+
+test('rules are counted by state', () => {
+	assert.deepEqual({ ...policyFor().ruleCount }, { report: 1, review: 0 });
+	assert.deepEqual({ ...policyFor({ REPORT_RULES: [{ signatureId: 1, offender: 'src', flags: ['SSH'], review: true }] }).ruleCount }, { report: 0, review: 1 });
+});
+
+test('empty or missing rules are allowed and report nothing', () => {
+	for (const rules of [[], undefined]) {
+		const policy = policyFor({ REPORT_RULES: rules });
+		assert.deepEqual({ ...policy.ruleCount }, { report: 0, review: 0 });
+		assert.equal(policy.evaluate(event()), null);
+	}
 });
 
 test('invalid configuration is rejected', () => {
 	const rule = CONFIG.REPORT_RULES[0];
 	for (const config of [
-		{ REPORT_MODE: 'invalid' },
-		{ REPORT_RULES: [] },
 		{ REPORT_RULES: {} },
 		{ REPORT_RULES: [null] },
 		{ REPORT_RULES: [{ ...rule, signatureId: 0 }] },
 		{ REPORT_RULES: [{ ...rule, offender: 'either' }] },
 		{ REPORT_RULES: [{ ...rule, flags: [] }] },
 		{ REPORT_RULES: [{ ...rule, flags: ['NOT_A_FLAG'] }] },
+		{ REPORT_RULES: [{ ...rule, review: 'yes' }] },
 		{ REPORT_RULES: [rule, rule] },
 	]) {
 		assert.throws(() => policyFor(config), Error, JSON.stringify(config));

@@ -1,5 +1,4 @@
 module.exports = [
-	{ key: 'REPORT_MODE', type: String, oneOf: ['review', 'report'], default: 'review' },
 	{ key: 'REPORT_RULES', type: Array, default: [] },
 	{ key: 'SURICATA_EVE_FILE', type: String, nonEmpty: true },
 	{ key: 'SURICATA_CONFIG_FILE', type: String, nonEmpty: true, default: '/etc/suricata/suricata.yaml' },
