@@ -23,7 +23,7 @@ module.exports = ({
 	const run = async ({ data }) => {
 		if (isReportedRecently(data.srcIp)) return;
 
-		// Whitelist, server IPs or rules may have changed while the job was waiting
+		// The whitelist or server IPs may have changed while the job was waiting
 		const current = policy.evaluate(data.evidence);
 		if (!current) return;
 
@@ -55,7 +55,7 @@ module.exports = ({
 		}
 	};
 
-	const processLine = async (line, test = false) => {
+	const processLine = async line => {
 		if (!accepting || !line?.includes('"alert"')) return;
 
 		let event;
@@ -67,7 +67,6 @@ module.exports = ({
 
 		const data = policy.evaluate(event, logSkip);
 		if (!data) return;
-		if (test) return data;
 
 		if (isReportedRecently(data.srcIp)) return logSkip?.(`${data.srcIp} was reported recently`);
 		if (pending.has(data.srcIp)) return pending.get(data.srcIp);

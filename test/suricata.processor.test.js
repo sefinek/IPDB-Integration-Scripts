@@ -97,12 +97,11 @@ test('a report error is logged and does not block the IP', async () => {
 	assert.ok(s.marked.has('8.8.8.8'));
 });
 
-test('non-alert, malformed and test lines are handled without reporting', async () => {
+test('non-alert and malformed lines are ignored', async () => {
 	const s = setup();
 	await s.processor.processLine('{"event_type":"flow"}');
 	await s.processor.processLine('{broken "alert"');
 	await s.processor.processLine(undefined);
-	assert.equal((await s.processor.processLine(line('8.8.8.8'), true)).srcIp, '8.8.8.8');
 
 	assert.deepEqual(s.reports, []);
 });
