@@ -9,7 +9,6 @@ const createPolicy = require('../suricata/reportPolicy.js');
 const homeNet = parseHomeNet('[10.0.0.0/8,2a01:11bf:4404:9000::/56]');
 
 const CONFIG = {
-	REPORT_RULES: [{ signatureId: 100, offender: 'src', flags: ['PORT_SCAN', 'HACKING'] }],
 	MIN_ALERT_SEVERITY: 2,
 	ALLOWED_VERDICT_ACTIONS: ['alert', 'drop'],
 };
@@ -24,46 +23,56 @@ const event = changes => ({
 	src_port: 51234,
 	dest_port: 22,
 	proto: 'TCP',
-	alert: { signature_id: 100, severity: 1, signature: 'Test alert' },
+	alert: { signature_id: 100, severity: 1, signature: 'Test alert', category: 'Misc Attack' },
 	...changes,
 });
 
-test('an external source targeting HOME_NET is reported with mapped categories', () => {
+test('an external host connecting to HOME_NET is reported', () => {
 	const data = policyFor().evaluate(event());
 	assert.equal(data.srcIp, '8.8.8.8');
-	assert.equal(data.categories, '14,15');
+	assert.equal(data.categories, '15');
 	assert.equal(data.dpt, 22);
 	assert.equal(data.proto, 'TCP');
 	assert.equal(data.signature, 'Test alert');
 });
 
-test('the offender direction is taken from the rule, never guessed', () => {
-	const outgoing = event({ src_ip: '10.0.0.13', dest_ip: '8.8.8.8' });
-	assert.equal(policyFor().evaluate(outgoing), null);
-
-	const destPolicy = policyFor({ REPORT_RULES: [{ signatureId: 100, offender: 'dest', flags: ['CNC_BEACONING'] }] });
-	assert.equal(destPolicy.evaluate(outgoing).srcIp, '8.8.8.8');
-	assert.equal(destPolicy.evaluate(event()), null);
+test('categories are based on the alert classification', () => {
+	const categoryOf = category => policyFor().evaluate(event({ alert: { signature_id: 100, severity: 1, category } })).categories;
+	assert.equal(categoryOf('Detection of a Network Scan'), '14');
+	assert.equal(categoryOf('Attempted Information Leak'), '14');
+	assert.equal(categoryOf('Web Application Attack'), '21');
+	assert.equal(categoryOf('Attempted Denial of Service'), '4');
+	assert.equal(categoryOf('Unknown classtype'), '15');
+	assert.equal(categoryOf(undefined), '15');
 });
 
-test('both sides must match: offender outside and peer inside HOME_NET', () => {
+test('hosts contacted from the local network are never reported', () => {
 	const policy = policyFor();
-	assert.equal(policy.evaluate(event({ dest_ip: '9.9.9.9' })), null);
-	assert.equal(policy.evaluate(event({ src_ip: '10.0.0.5' })), null);
-	assert.equal(policy.evaluate(event({ src_ip: '2a01:11bf:4404:900a::31' })), null);
-	assert.equal(policy.evaluate(event({ dest_ip: '2a01:11bf:4404:900a:0:0:0:31' })).srcIp, '8.8.8.8');
-});
 
-test('a remote host that only replied to a local connection is not reported', () => {
-	const policy = policyFor();
+	// Outgoing packet, e.g. a DNS query to a resolver
+	assert.equal(policy.evaluate(event({ src_ip: '10.0.0.13', dest_ip: '8.8.8.8' })), null);
+
+	// Reply to a local connection (Suricata 7+ flow initiator)
 	assert.equal(policy.evaluate(event({ flow: { src_ip: '10.0.0.13' } })), null);
-	assert.equal(policy.evaluate(event({ flow: { src_ip: '::ffff:8.8.8.8' } })).srcIp, '8.8.8.8');
+});
 
-	const data = policy.evaluate(event({ flow: { src_ip: '8.8.8.8', bytes_toserver: 100 } }));
+test('the flow initiator decides, not the direction of the alerted packet', () => {
+	const policy = policyFor();
+
+	// Response sent by a local server to an external host that opened the connection
+	const data = policy.evaluate(event({ src_ip: '10.0.0.13', dest_ip: '8.8.8.8', flow: { src_ip: '8.8.8.8' } }));
+	assert.equal(data.srcIp, '8.8.8.8');
 	assert.deepEqual(data.evidence.flow, { src_ip: '8.8.8.8' });
 
-	const destPolicy = policyFor({ REPORT_RULES: [{ signatureId: 100, offender: 'dest', flags: ['CNC_BEACONING'] }] });
-	assert.equal(destPolicy.evaluate(event({ src_ip: '10.0.0.13', dest_ip: '8.8.8.8', flow: { src_ip: '10.0.0.13' } })).srcIp, '8.8.8.8');
+	assert.equal(policy.evaluate(event({ flow: { src_ip: '::ffff:8.8.8.8' } })).srcIp, '8.8.8.8');
+});
+
+test('alerts between two local or two external hosts are skipped', () => {
+	const policy = policyFor();
+	assert.equal(policy.evaluate(event({ src_ip: '10.0.0.5' })), null);
+	assert.equal(policy.evaluate(event({ dest_ip: '9.9.9.9' })), null);
+	assert.equal(policy.evaluate(event({ src_ip: '2a01:11bf:4404:900a::31' })), null);
+	assert.equal(policy.evaluate(event({ dest_ip: '2a01:11bf:4404:900a:0:0:0:31' })).srcIp, '8.8.8.8');
 });
 
 test('special-purpose and server IPs are never reported', () => {
@@ -75,6 +84,12 @@ test('special-purpose and server IPs are never reported', () => {
 	assert.equal(policy.canReportIP('invalid'), false);
 });
 
+test('a public server IP outside HOME_NET counts as local', () => {
+	const policy = policyFor({}, { getServerIPs: () => ['1.2.3.4'] });
+	assert.equal(policy.evaluate(event({ dest_ip: '1.2.3.4' })).srcIp, '8.8.8.8');
+	assert.equal(policy.evaluate(event({ src_ip: '1.2.3.4', dest_ip: '8.8.8.8' })), null);
+});
+
 test('IPv4-mapped addresses are normalized', () => {
 	assert.equal(policyFor().evaluate(event({ src_ip: '::ffff:8.8.8.8' })).srcIp, '8.8.8.8');
 });
@@ -84,10 +99,10 @@ test('whitelisted IPs and ignored signatures are skipped', () => {
 	assert.equal(policyFor({}, { isIgnored: id => id === 100 }).evaluate(event()), null);
 });
 
-test('severity, verdict and signature filters are applied', () => {
+test('severity and verdict filters are applied', () => {
 	const policy = policyFor();
 	assert.equal(policy.evaluate(event({ alert: { signature_id: 100, severity: 3 } })), null);
-	assert.equal(policy.evaluate(event({ alert: { signature_id: 999, severity: 1 } })), null);
+	assert.ok(policy.evaluate(event({ alert: { signature_id: 100, severity: 2 } })));
 	assert.equal(policy.evaluate(event({ verdict: { action: 'pass' } })), null);
 	assert.ok(policy.evaluate(event({ verdict: { action: 'drop' } })));
 });
@@ -120,52 +135,20 @@ test('Suricata timestamps keep their timezone', () => {
 
 test('the evidence contains only metadata and can be evaluated again', () => {
 	const policy = policyFor();
-	const data = policy.evaluate(event({ http: { http_request_body: 'pwd=secret' }, payload: 'AAAA' }));
+	const data = policy.evaluate(event({ http: { http_request_body: 'pwd=secret' }, payload: 'AAAA', flow: { src_ip: '8.8.8.8', bytes_toserver: 100 } }));
 
 	assert.equal(JSON.stringify(data.evidence).includes('secret'), false);
 	assert.equal(data.evidence.payload, undefined);
+	assert.deepEqual(data.evidence.flow, { src_ip: '8.8.8.8' });
 	assert.deepEqual(policy.evaluate(data.evidence), data);
 });
 
 test('skip reasons are reported only when requested', () => {
 	const reasons = [];
-	policyFor().evaluate(event({ alert: { signature_id: 999, severity: 1 } }), reason => reasons.push(reason));
-	assert.match(reasons[0], /999 has no entry in REPORT_RULES/);
+	policyFor().evaluate(event({ src_ip: '10.0.0.13', dest_ip: '8.8.8.8' }), reason => reasons.push(reason));
+	assert.match(reasons[0], /Connection to 8\.8\.8\.8 was opened from the local network/);
 });
 
-test('rules in review are marked, so they are only logged', () => {
-	const policy = policyFor({ REPORT_RULES: [{ signatureId: 100, offender: 'src', flags: ['PORT_SCAN'], review: true }] });
-	assert.equal(policy.evaluate(event()).review, true);
-	assert.equal(policyFor().evaluate(event()).review, false);
-});
-
-test('rules are counted by state', () => {
-	assert.deepEqual({ ...policyFor().ruleCount }, { report: 1, review: 0 });
-	assert.deepEqual({ ...policyFor({ REPORT_RULES: [{ signatureId: 1, offender: 'src', flags: ['SSH'], review: true }] }).ruleCount }, { report: 0, review: 1 });
-});
-
-test('empty or missing rules are allowed and report nothing', () => {
-	for (const rules of [[], undefined]) {
-		const policy = policyFor({ REPORT_RULES: rules });
-		assert.deepEqual({ ...policy.ruleCount }, { report: 0, review: 0 });
-		assert.equal(policy.evaluate(event()), null);
-	}
-});
-
-test('invalid configuration is rejected', () => {
-	const rule = CONFIG.REPORT_RULES[0];
-	for (const config of [
-		{ REPORT_RULES: {} },
-		{ REPORT_RULES: [null] },
-		{ REPORT_RULES: [{ ...rule, signatureId: 0 }] },
-		{ REPORT_RULES: [{ ...rule, offender: 'either' }] },
-		{ REPORT_RULES: [{ ...rule, flags: [] }] },
-		{ REPORT_RULES: [{ ...rule, flags: ['NOT_A_FLAG'] }] },
-		{ REPORT_RULES: [{ ...rule, review: 'yes' }] },
-		{ REPORT_RULES: [rule, rule] },
-	]) {
-		assert.throws(() => policyFor(config), Error, JSON.stringify(config));
-	}
-
+test('isHomeNet is required', () => {
 	assert.throws(() => createPolicy(CONFIG, {}), /isHomeNet/);
 });

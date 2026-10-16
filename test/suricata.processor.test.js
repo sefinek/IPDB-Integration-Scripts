@@ -15,13 +15,13 @@ const deferred = () => {
 
 // Minimal policy: the event's src_ip is the offender, the evidence is the event itself
 const policy = () => ({
-	evaluate: event => (event?.event_type === 'alert' ? { srcIp: event.src_ip.replace('::ffff:', ''), review: Boolean(event.review), evidence: event } : null),
+	evaluate: event => (event?.event_type === 'alert' ? { srcIp: event.src_ip.replace('::ffff:', ''), evidence: event } : null),
 });
 
-const line = (ip, extra = {}) => JSON.stringify({ event_type: 'alert', src_ip: ip, ...extra });
+const line = ip => JSON.stringify({ event_type: 'alert', src_ip: ip });
 
 const setup = (options = {}) => {
-	const marked = new Set(), reports = [], reviews = [], deferredData = [];
+	const marked = new Set(), reports = [], deferredData = [];
 	const errors = [], warnings = [];
 	let saves = 0;
 
@@ -37,12 +37,11 @@ const setup = (options = {}) => {
 			saves++;
 		},
 		deferPending: async entries => deferredData.push(...entries),
-		logReview: data => reviews.push(data.srcIp),
 		logger: { warn: msg => warnings.push(msg), error: msg => errors.push(msg) },
 		...options,
 	});
 
-	return { processor, marked, reports, reviews, deferredData, errors, saves: () => saves };
+	return { processor, marked, reports, deferredData, errors, saves: () => saves };
 };
 
 test('a reported IP is marked and persisted', async () => {
@@ -96,16 +95,6 @@ test('a report error is logged and does not block the IP', async () => {
 	assert.equal(calls, 2);
 	assert.match(s.errors[0], /timeout/);
 	assert.ok(s.marked.has('8.8.8.8'));
-});
-
-test('alerts matched by a rule in review are only logged', async () => {
-	const s = setup();
-	await s.processor.processLine(line('8.8.8.8', { review: true }));
-	await s.processor.processLine(line('9.9.9.9'));
-
-	assert.deepEqual(s.reviews, ['8.8.8.8']);
-	assert.deepEqual(s.reports, ['9.9.9.9']);
-	assert.equal(s.marked.has('8.8.8.8'), false);
 });
 
 test('non-alert, malformed and test lines are handled without reporting', async () => {

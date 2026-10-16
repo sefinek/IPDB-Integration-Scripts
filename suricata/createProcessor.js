@@ -5,7 +5,6 @@ module.exports = ({
 	markReported,
 	persistReported,
 	deferPending,
-	logReview,
 	logSkip,
 	logger,
 	maxConcurrent = 4,
@@ -69,8 +68,6 @@ module.exports = ({
 		const data = policy.evaluate(event, logSkip);
 		if (!data) return;
 		if (test) return data;
-
-		if (data.review) return logReview(data);
 
 		if (isReportedRecently(data.srcIp)) return logSkip?.(`${data.srcIp} was reported recently`);
 		if (pending.has(data.srcIp)) return pending.get(data.srcIp);
