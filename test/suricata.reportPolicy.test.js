@@ -96,7 +96,9 @@ test('IPv4-mapped addresses are normalized', () => {
 
 test('whitelisted IPs and ignored signatures are skipped', () => {
 	assert.equal(policyFor({}, { isWhitelisted: ip => ip === '8.8.8.8' }).evaluate(event()), null);
-	assert.equal(policyFor({}, { isIgnored: id => id === 100 }).evaluate(event()), null);
+	const reasons = [];
+	assert.equal(policyFor({}, { getIgnoredReason: id => (id === 100 ? 'Discord' : null) }).evaluate(event(), reason => reasons.push(reason)), null);
+	assert.equal(reasons[0], 'Signature 100 is ignored (Discord)');
 });
 
 test('severity and verdict filters are applied', () => {

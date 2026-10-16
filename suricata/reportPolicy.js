@@ -17,7 +17,7 @@ const toCategories = category => createFlagCollection().add(...(CATEGORY_FLAGS[c
 
 const isPositiveInteger = value => Number.isSafeInteger(value) && value > 0;
 
-module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = () => false, isIgnored = () => false, now = Date.now }) => {
+module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = () => false, getIgnoredReason = () => null, now = Date.now }) => {
 	if (typeof isHomeNet !== 'function') throw new Error('isHomeNet must be a function');
 
 	const minSeverity = config.MIN_ALERT_SEVERITY;
@@ -46,7 +46,8 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 
 		const { signature_id: id, severity, signature = 'Unknown Signature', category } = event.alert;
 		if (!isPositiveInteger(id) || !Number.isInteger(severity) || severity < 1) return skip(`Invalid alert metadata: SIGNATURE=${id} SEVERITY=${severity}`);
-		if (isIgnored(id)) return skip(`Signature ${id} is ignored`);
+		const ignoredReason = getIgnoredReason(id);
+		if (ignoredReason) return skip(`Signature ${id} is ignored (${ignoredReason})`);
 		if (severity > minSeverity) return skip(`${signature}: SIGNATURE=${id} SEVERITY=${severity} is below the threshold`);
 
 		const verdict = event.verdict?.action;

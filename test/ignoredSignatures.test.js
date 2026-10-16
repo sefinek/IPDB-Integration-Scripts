@@ -1,5 +1,5 @@
 const { setup } = require('./helpers.js');
-setup({ USE_BUILT_IN_IGNORED_SIGNATURES: true, IGNORED_SIGNATURES: [1234567] });
+const { logger } = setup({ USE_BUILT_IN_IGNORED_SIGNATURES: true, IGNORED_SIGNATURES: [1234567, ' 7654321 ', 'abc', -5, 1.5, null] });
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -12,14 +12,23 @@ test('built-in signatures are ignored with their description', () => {
 	}
 });
 
-test('signatures from config are ignored', () => {
-	assert.equal(isIgnored(1234567), true);
-	assert.equal(getDescription(1234567), 'Local config');
+test('signatures from config are ignored, also when given as numeric strings', () => {
+	for (const id of [1234567, 7654321]) {
+		assert.equal(isIgnored(id), true, String(id));
+		assert.equal(getDescription(id), 'Local config');
+	}
 });
 
-test('other signatures are not ignored', () => {
+test('invalid entries in IGNORED_SIGNATURES are skipped and reported', () => {
+	assert.equal(logger.messages.warn.length, 1);
+	assert.match(logger.messages.warn[0], /IGNORED_SIGNATURES, skipping: abc, -5, 1\.5, null$/);
+});
+
+test('other signatures and object prototype keys are not ignored', () => {
 	assert.equal(isIgnored(2000001), false);
 	assert.equal(getDescription(2000001), null);
+	assert.equal(isIgnored('toString'), false);
+	assert.equal(isIgnored('constructor'), false);
 });
 
 test('built-in signature IDs are valid positive integers', () => {
