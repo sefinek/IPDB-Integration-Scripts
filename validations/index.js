@@ -1,6 +1,7 @@
 const { repoName } = require('../repo.js');
 const validateConfig = require('./validateConfig.js');
-const { rules: common, services } = require('./common.js');
+const { rules: common, deprecated, services } = require('./common.js');
+const logger = require('../logger.js');
 
 const PROJECT_RULES = {
 	suricata: require('./suricata.js'),
@@ -30,4 +31,8 @@ module.exports = config => {
 	if (projectRules) rules.push(...projectRules);
 
 	validateConfig(config, rules);
+
+	for (const [key, reason] of Object.entries(deprecated)) {
+		if (key in config) logger.warn(`'${key}' is deprecated and no longer has any effect. ${reason} Please remove it from your config file.`);
+	}
 };

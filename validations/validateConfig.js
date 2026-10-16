@@ -151,6 +151,10 @@ const validateConfig = (config, rules) => {
 			}
 
 			if (typeName === 'number') {
+				if (!Number.isFinite(value)) {
+					errors.push(`'${key}' must be a finite number`);
+					continue;
+				}
 				if (typeof min === 'number' && value < min) errors.push(`'${key}' must be >= ${min}, got ${value}`);
 				if (typeof max === 'number' && value > max) errors.push(`'${key}' must be <= ${max}, got ${value}`);
 			}

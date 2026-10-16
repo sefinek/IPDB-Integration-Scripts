@@ -31,3 +31,11 @@
 | `prec`      | Precedence value in TOS field                        |
 | `window`    | TCP window size                                      |
 | `urgp`      | TCP urgent pointer                                   |
+
+## Tests
+Run from the root of any integration project (requires its `node_modules` and `config.js`):
+```bash
+node --test "scripts/test/*.test.js"
+```
+
+The tests replace `config.js` and `logger.js` with stubs, so they never read your configuration, send webhooks or call any API.

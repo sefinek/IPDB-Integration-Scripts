@@ -1,5 +1,6 @@
 const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
+const normalizeIP = require('../normalizeIP.js');
 const resolvePath = require('../pathResolver.js');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
 const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
@@ -30,13 +31,16 @@ const loadReportedIPs = async () => {
 
 	try {
 		const fileContent = await fs.readFile(RESOLVED_CACHE_FILE, 'utf8');
-		fileContent
-			.split('\n')
-			.filter(Boolean)
-			.forEach(line => {
-				const [ip, time] = line.trim().split(/\s+/);
-				if (ip && !isNaN(time)) reportedIPs.set(ip, Number(time));
-			});
+		const now = Date.now() / 1000;
+
+		for (const line of fileContent.split('\n')) {
+			const [rawIp, rawTime] = line.trim().split(/\s+/);
+			const ip = normalizeIP(rawIp);
+			const time = Number(rawTime);
+			if (!ip || !Number.isFinite(time) || time <= 0 || time > now) continue;
+
+			reportedIPs.set(ip, Math.max(reportedIPs.get(ip) || 0, time));
+		}
 	} catch (err) {
 		if (err.code === 'ENOENT') {
 			logger.info(`${RESOLVED_CACHE_FILE} does not exist. No data to load.`);
@@ -64,12 +68,17 @@ const saveReportedIPs = () => {
 const IP_REPORT_COOLDOWN_SECONDS = IP_REPORT_COOLDOWN / 1000;
 
 const isIPReportedRecently = ip => {
-	const reportedTime = reportedIPs.get(ip);
+	const reportedTime = reportedIPs.get(normalizeIP(ip));
 	if (!reportedTime) return false;
 	return (Math.floor(Date.now() / 1000) - reportedTime < IP_REPORT_COOLDOWN_SECONDS);
 };
 
-const markIPAsReported = ip => reportedIPs.set(ip, Math.floor(Date.now() / 1000));
+const markIPAsReported = ip => {
+	const normalized = normalizeIP(ip);
+	if (!normalized) return logger.warn(`Cannot mark invalid IP address as reported: ${ip}`);
+
+	reportedIPs.set(normalized, Math.floor(Date.now() / 1000));
+};
 
 module.exports = Object.freeze({
 	reportedIPs,

@@ -3,82 +3,70 @@ const https = require('node:https');
 const { CronJob } = require('cron');
 const { axiosSefinek } = require('./axios.js');
 const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
+const normalizeIP = require('../normalizeIP.js');
 const logger = require('../logger.js');
 const { IP_ASSIGNMENT, IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
 
-const ipAddresses = new Set();
-let ipv6ErrorCount = 0, ipv6ErrorLogged = false;
-let isRefreshing = false;
+const IP_API_URL = 'https://api.sefinek.net/api/v2/ip';
+const ATTEMPTS = { 4: 1, 6: 6 };
+const RETRY_DELAY = 4000;
+
+// Last successfully fetched public IP per family. Kept on failure, so a temporary outage never disables self-protection.
+const publicIPs = new Map();
+let serverIPs = [];
+let refreshing = null;
 
 const fetchLocalIPs = () => {
-	for (const ifaceList of Object.values(networkInterfaces())) {
-		for (const iface of ifaceList) {
-			const addr = iface?.address;
-			if (addr && !iface.internal && !isSpecialPurposeIP(addr).is) ipAddresses.add(addr);
-		}
+	const ips = [];
+	for (const iface of Object.values(networkInterfaces()).flat()) {
+		const ip = normalizeIP(iface.address);
+		if (ip && !iface.internal && !isSpecialPurposeIP(ip).is) ips.push(ip);
 	}
+
+	return ips;
 };
 
-const fetchIPAddress = async (family, attempt = 1) => {
-	if (family === 0) return fetchLocalIPs();
-	if (family === 6 && (!IPv6_SUPPORT || ipv6ErrorLogged)) return;
+const fetchPublicIP = async family => {
+	let lastError;
+	for (let attempt = 1; attempt <= ATTEMPTS[family]; attempt++) {
+		if (attempt > 1) await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
 
-	try {
-		const { data } = await axiosSefinek.get('https://api.sefinek.net/api/v2/ip', {
-			httpsAgent: new https.Agent({ family }),
-		});
-
-		if (data?.success && data?.message) {
-			ipAddresses.add(data.message);
-
-			if (family === 6 && ipv6ErrorCount > 0) {
-				logger.success(`IPv6 is now working. It succeeded after ${ipv6ErrorCount} failed attempts.`);
-				ipv6ErrorCount = 0;
-				ipv6ErrorLogged = false;
+		try {
+			const { data } = await axiosSefinek.get(IP_API_URL, { httpsAgent: new https.Agent({ family }) });
+			const ip = normalizeIP(data?.message);
+			if (!data?.success || !ip || isSpecialPurposeIP(ip).is || (ip.includes(':') ? 6 : 4) !== family) {
+				throw new Error(`Unexpected API response: success=${data?.success}, message=${data?.message}`);
 			}
-		} else {
-			logger.warn(`Unexpected API response: success=${data?.success}, message=${data?.message}`);
-		}
-	} catch (err) {
-		logger.error(`Failed to fetch IPv${family} address (attempt ${attempt}): ${err.message}`);
 
-		if (family === 6) {
-			ipv6ErrorCount++;
-
-			if (ipv6ErrorCount >= 6 && !ipv6ErrorLogged) {
-				ipv6ErrorLogged = true;
-				logger.warn('IPv6 address could not be retrieved after multiple attempts. Disabling further checks.');
-			} else if (attempt < 6) {
-				await new Promise(resolve => setTimeout(resolve, 4000));
-				await fetchIPAddress(6, attempt + 1);
-			}
+			publicIPs.set(family, ip);
+			return;
+		} catch (err) {
+			lastError = err;
 		}
 	}
+
+	const lastKnown = publicIPs.get(family);
+	logger.error(`Failed to fetch IPv${family} address after ${ATTEMPTS[family]} attempt(s): ${lastError.message}${lastKnown ? `. Keeping the last known address: ${lastKnown}` : ''}`);
 };
 
-const refreshServerIPs = async () => {
-	if (isRefreshing) {
-		logger.info('IP refresh already in progress, skipping...');
-		return;
-	}
+const refreshServerIPs = () => {
+	refreshing ??= (async () => {
+		logger.info(`Trying to fetch your public IP address${IPv6_SUPPORT ? 'es' : ''} from api.sefinek.net...`);
+		await Promise.all([fetchPublicIP(4), IPv6_SUPPORT && fetchPublicIP(6)]);
 
-	isRefreshing = true;
-	logger.info('Trying to fetch your IPv4 and IPv6 address from api.sefinek.net...');
+		serverIPs = [...new Set([...fetchLocalIPs(), ...publicIPs.values()])];
+	})().finally(() => {
+		refreshing = null;
+	});
 
-	try {
-		await Promise.all([fetchIPAddress(0), fetchIPAddress(4), fetchIPAddress(6)]);
-	} catch (err) {
-		logger.error(`Failed to refresh IP addresses: ${err.message}`);
-	} finally {
-		isRefreshing = false;
-	}
+	return refreshing;
 };
 
-(async () => {
-	if (IP_ASSIGNMENT === 'dynamic') new CronJob(IP_REFRESH_SCHEDULE || '0 */6 * * *', refreshServerIPs, null, true);
-})();
+if (IP_ASSIGNMENT === 'dynamic') new CronJob(IP_REFRESH_SCHEDULE || '0 */6 * * *', refreshServerIPs, null, true);
 
 module.exports = Object.freeze({
 	refreshServerIPs,
-	getServerIPs: () => [...ipAddresses],
+
+	// Normalized addresses (see normalizeIP)
+	getServerIPs: () => serverIPs,
 });

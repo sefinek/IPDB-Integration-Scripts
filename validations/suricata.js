@@ -1,5 +1,8 @@
 module.exports = [
+	{ key: 'REPORT_MODE', type: String, oneOf: ['review', 'report'], default: 'review' },
+	{ key: 'REPORT_RULES', type: Array, default: [] },
 	{ key: 'SURICATA_EVE_FILE', type: String, nonEmpty: true },
+	{ key: 'SURICATA_CONFIG_FILE', type: String, nonEmpty: true, default: '/etc/suricata/suricata.yaml' },
 	{ key: 'MIN_ALERT_SEVERITY', type: Number, min: 1, max: 3 },
 	{ key: 'ALLOWED_VERDICT_ACTIONS', type: Array, nonEmpty: true, oneOf: ['alert', 'pass', 'drop'], default: ['alert', 'drop'] },
 	{ key: 'USE_BUILT_IN_IGNORED_SIGNATURES', type: Boolean },

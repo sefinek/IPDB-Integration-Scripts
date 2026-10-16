@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const ipaddr = require('ipaddr.js');
+const normalizeIP = require('../normalizeIP.js');
 const logger = require('../logger.js');
 const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
 
@@ -49,7 +50,7 @@ const parse = content => {
 			continue;
 		}
 
-		set.add(line);
+		set.add(normalizeIP(line));
 	}
 
 	if (invalid.length > 0) {
@@ -100,7 +101,9 @@ const initWhitelist = () => {
 	}
 };
 
-const isWhitelisted = ip => {
+const isWhitelisted = value => {
+	const ip = normalizeIP(value);
+	if (!ip) return false;
 	if (whitelistedIPs.has(ip)) return true;
 	if (whitelistedRanges.length === 0) return false;
 

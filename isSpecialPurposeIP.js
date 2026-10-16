@@ -1,4 +1,5 @@
 const ipaddr = require('ipaddr.js');
+const normalizeIP = require('./normalizeIP.js');
 
 const LOCAL_RANGES = new Set([
 	'unspecified', 'multicast', 'linkLocal', 'loopback', 'reserved', 'benchmarking', 'amt',
@@ -7,10 +8,9 @@ const LOCAL_RANGES = new Set([
 ]);
 
 module.exports = ip => {
-	try {
-		const range = ipaddr.parse(ip).range();
-		return { is: LOCAL_RANGES.has(range), range };
-	} catch {
-		return { is: false, range: null };
-	}
+	const normalized = normalizeIP(ip);
+	if (!normalized) return { is: true, range: null };
+
+	const range = ipaddr.parse(normalized).range();
+	return { is: LOCAL_RANGES.has(range), range };
 };

@@ -3,181 +3,156 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { axiosBulk } = require('../services/axios.js');
-const { saveReportedIPs, markIPAsReported } = require('../services/cache.js');
+const { axiosBulk } = require('./axios.js');
+const { saveReportedIPs, markIPAsReported } = require('./cache.js');
 const ABUSE_STATE = require('./state.js');
 const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
 const { truncateComment } = require('../comment.js');
+const uploadSnapshot = require('./bulkUpload.js');
 const logger = require('../logger.js');
 
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');
-const OFFLINE_MODE = false;
+const API_COLUMNS = ['IP', 'Categories', 'ReportDate', 'Comment'];
 
-const ensureDirectoryExists = async filePath => {
-	try {
-		await fs.mkdir(path.dirname(filePath), { recursive: true });
-	} catch (err) {
-		if (err.code !== 'EEXIST') throw err;
-	}
-};
+// The optional Context column stores event data that lets an integration re-evaluate the entry before upload. It is never sent to the API.
+const BUFFER_COLUMNS = [...API_COLUMNS, 'Context'];
+
+let currentUpload = null;
 
 const saveBufferToFile = () => queueWrite(BUFFER_FILE, async () => {
-	if (!BULK_REPORT_BUFFER.size) return;
-
-	const records = [];
-	for (const [ip, entry] of BULK_REPORT_BUFFER.entries()) {
-		records.push([ip, entry.categories, new Date(entry.timestamp).toISOString(), entry.comment]);
-	}
-
 	try {
-		const output = stringify(records, { header: true, columns: ['IP', 'Categories', 'ReportDate', 'Comment'], quoted: true });
-		await ensureDirectoryExists(BUFFER_FILE);
-		await atomicWriteFile(BUFFER_FILE, output);
+		if (!BULK_REPORT_BUFFER.size) {
+			await fs.rm(BUFFER_FILE, { force: true });
+			return;
+		}
+
+		const records = Array.from(BULK_REPORT_BUFFER, ([ip, entry]) => [
+			ip,
+			entry.categories,
+			new Date(entry.timestamp).toISOString(),
+			entry.comment,
+			entry.context ? JSON.stringify(entry.context) : '',
+		]);
+
+		await fs.mkdir(path.dirname(BUFFER_FILE), { recursive: true });
+		await atomicWriteFile(BUFFER_FILE, stringify(records, { header: true, columns: BUFFER_COLUMNS, quoted: true }));
 	} catch (err) {
 		logger.error(`Failed to write buffer file: ${err.message}`, { ping: true });
 	}
 });
 
-const loadBufferFromFile = async () => {
+const parseContext = (ip, value) => {
+	if (!value) return undefined;
+
 	try {
-		await fs.access(BUFFER_FILE);
-
-		const fileContent = await fs.readFile(BUFFER_FILE, 'utf-8');
-		const records = parse(fileContent, { columns: false, from_line: 2, skip_empty_lines: true, trim: true });
-
-		for (const record of records) {
-			const [ip, categories, timestamp, comment] = record;
-			if (!ip || !timestamp) continue;
-			BULK_REPORT_BUFFER.set(ip, { categories, timestamp: new Date(timestamp).getTime(), comment });
-		}
-	} catch (err) {
-		if (err.code !== 'ENOENT') logger.error(`Failed to parse/load buffer file: ${err.message}`);
+		return JSON.parse(value);
+	} catch {
+		logger.warn(`Invalid context of buffered IP ${ip}, ignoring it`);
+		return undefined;
 	}
 };
 
-const sendBulkReport = async () => {
-	if (!BULK_REPORT_BUFFER.size) return;
+const loadBufferFromFile = async () => {
+	let content;
+	try {
+		content = await fs.readFile(BUFFER_FILE, 'utf8');
+	} catch (err) {
+		if (err.code !== 'ENOENT') logger.error(`Failed to read buffer file: ${err.message}`);
+		return;
+	}
 
-	logger.info(`Starting bulk report upload (${BULK_REPORT_BUFFER.size} IPs)...`);
+	try {
+		const records = parse(content, { columns: false, from_line: 2, skip_empty_lines: true, trim: true, relax_column_count: true });
 
-	const records = Array.from(BULK_REPORT_BUFFER.entries(), ([ip, entry]) => [
+		for (const [ip, categories, reportDate, comment, context] of records) {
+			const timestamp = Date.parse(reportDate);
+			if (!ip || !Number.isFinite(timestamp)) continue;
+
+			BULK_REPORT_BUFFER.set(ip, { categories, timestamp, comment, context: parseContext(ip, context) });
+		}
+	} catch (err) {
+		logger.error(`Failed to parse buffer file: ${err.message}`);
+	}
+};
+
+const toPayload = chunk => {
+	const records = chunk.map(([ip, entry]) => [
 		ip,
 		entry.categories,
-		new Date(entry.timestamp ?? Date.now()).toISOString(),
+		new Date(entry.timestamp).toISOString(),
 		truncateComment(entry.comment || ''),
 	]);
 
-	const sendChunk = async (chunk, index = 0, total = 1) => {
-		const payload = stringify(chunk, {
-			header: true,
-			columns: ['IP', 'Categories', 'ReportDate', 'Comment'],
-			quoted: true,
-		});
+	return stringify(records, { header: true, columns: API_COLUMNS, quoted: true });
+};
 
-		const lines = payload.split('\n').length;
-		logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : ''}Generated CSV with ${chunk.length} records, ${lines} lines`);
+const upload = async chunk => {
+	const form = new FormData();
+	form.append('csv', Buffer.from(toPayload(chunk)), { filename: 'report.csv', contentType: 'text/csv' });
 
-		if (OFFLINE_MODE) {
-			if (lines > 10000) {
-				const error = new Error('Line limit exceeded');
-				error.response = {
-					status: 422,
-					data: { errors: [{ detail: `File uploaded has ${lines} lines which exceeds the line limit of 10,000 lines.`, status: 422 }] },
-				};
-				throw error;
-			}
+	const { data } = await axiosBulk.post('/bulk-report', form, { headers: form.getHeaders() });
+	return data?.data;
+};
 
-			const saved = chunk.length;
-			logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, 0 rejected [OFFLINE]`, { discord: true });
-			return;
-		}
-
-		if (lines > 10000) {
-			const error = new Error('Line limit exceeded');
-			error.response = {
-				status: 422,
-				data: { errors: [{ detail: `File uploaded has ${lines} lines which exceeds the line limit of 10,000 lines.`, status: 422 }] },
-			};
-			throw error;
-		}
-
-		const form = new FormData();
-		form.append('csv', Buffer.from(payload), {
-			filename: total > 1 ? `report-chunk-${index + 1}.csv` : 'report.csv',
-			contentType: 'text/csv',
-		});
-
-		const { data } = await axiosBulk.post('/bulk-report', form, { headers: { ...form.getHeaders() } });
-		const saved = data?.data?.savedReports ?? 0;
-		const failed = data?.data?.invalidReports?.length ?? 0;
-
-		logger.success(`${total > 1 ? `Chunk ${index + 1}/${total}: ` : 'Sent bulk report: '}${saved} accepted, ${failed} rejected`, { discord: true });
-
-		if (failed > 0) {
-			const prefix = total > 1 ? `Chunk ${index + 1}: ` : '';
-			data.data.invalidReports.forEach(fail => {
-				logger.warn(`${prefix}Rejected [Row ${fail.rowNumber}] ${fail.input} -> ${fail.error}`);
-			});
-		}
-	};
-
-	const isLineLimitError = err =>
-		err.response?.status === 422 &&
-		err.response?.data?.errors?.some(e => e.detail.includes('exceeds the line limit'));
-
-	let success = false;
-
-	try {
-		await sendChunk(records);
-		success = true;
-	} catch (err) {
-		if (isLineLimitError(err)) {
-			const chunks = [];
-			const estimatedLinesPerRecord = 10;
-			const chunkSize = Math.max(1, Math.floor(9000 / estimatedLinesPerRecord));
-
-			for (let i = 0; i < records.length; i += chunkSize) {
-				chunks.push(records.slice(i, i + chunkSize));
-			}
-
-			logger.info(`File too large. Splitting ${records.length} records into ${chunks.length} chunks (~${chunkSize} records each)`, { discord: true });
-
-			let allChunksSuccessful = true;
-			for (let i = 0; i < chunks.length; i++) {
-				try {
-					await sendChunk(chunks[i], i, chunks.length);
-				} catch (chunkErr) {
-					logger.error(`Chunk ${i + 1} failed: ${chunkErr.response?.data?.errors?.[0]?.detail || chunkErr.message}`);
-					allChunksSuccessful = false;
-				}
-			}
-			success = allChunksSuccessful;
+const performUpload = async validateEntry => {
+	const snapshot = [];
+	for (const item of BULK_REPORT_BUFFER) {
+		if (!validateEntry || validateEntry(...item)) {
+			snapshot.push(item);
 		} else {
-			const errorMsg = err.response?.data?.errors
-				? err.response.data.errors.map(e => e.detail).join(', ')
-				: err.response?.data ? JSON.stringify(err.response.data) : err.stack;
-
-			logger.error(errorMsg);
+			BULK_REPORT_BUFFER.delete(item[0]);
+			logger.info(`Removed ${item[0]} from the bulk buffer, it is no longer eligible for reporting`);
 		}
 	}
 
-	if (success) {
-		for (const ip of BULK_REPORT_BUFFER.keys()) markIPAsReported(ip);
-		await saveReportedIPs();
-		BULK_REPORT_BUFFER.clear();
-
-		try {
-			await fs.unlink(BUFFER_FILE);
-		} catch (err) {
-			// Ignore file deletion errors - file may not exist or already deleted
-			if (err.code !== 'ENOENT') logger.warn(`Failed to delete buffer file: ${err.message}`);
-		}
-
-		ABUSE_STATE.sentBulk = true;
-	} else {
-		logger.error('Bulk upload failed, keeping buffer file for retry', { ping: true });
+	if (!snapshot.length) {
+		await saveBufferToFile();
+		return true;
 	}
+
+	logger.info(`Starting bulk report upload (${snapshot.length} IPs)...`);
+
+	let accepted = 0, rejected = 0;
+	const completed = await uploadSnapshot({
+		snapshot,
+		upload,
+		logger,
+		accept: async ([ip, entry]) => {
+			accepted++;
+			markIPAsReported(ip);
+			if (BULK_REPORT_BUFFER.get(ip) === entry) BULK_REPORT_BUFFER.delete(ip);
+		},
+		reject: async ([ip, entry], reason) => {
+			rejected++;
+			logger.warn(`Bulk report rejected ${ip}: ${reason}`);
+			if (BULK_REPORT_BUFFER.get(ip) === entry) BULK_REPORT_BUFFER.delete(ip);
+		},
+		settle: async () => {
+			await saveReportedIPs();
+			await saveBufferToFile();
+		},
+	});
+
+	if (accepted || rejected) logger.success(`Sent bulk report: ${accepted} accepted, ${rejected} rejected`, { discord: true });
+	if (!completed) logger.error(`Bulk upload incomplete, ${BULK_REPORT_BUFFER.size} IPs kept in the buffer for retry`, { ping: true });
+
+	ABUSE_STATE.sentBulk = completed;
+	return completed;
+};
+
+/**
+ * Uploads the buffered reports. Concurrent calls share the upload in progress.
+ * @param {Object} [options]
+ * @param {(ip: string, entry: Object) => boolean} [options.validateEntry] Entries for which it returns false are removed without being sent.
+ * @returns {Promise<boolean>} false if some entries could not be uploaded and remain in the buffer.
+ */
+const sendBulkReport = ({ validateEntry } = {}) => {
+	currentUpload ??= performUpload(validateEntry).finally(() => {
+		currentUpload = null;
+	});
+
+	return currentUpload;
 };
 
 module.exports = Object.freeze({

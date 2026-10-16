@@ -46,7 +46,7 @@ if (!serviceConfig) {
 
 if (SERVER_ID === 'development' && EXTENDED_LOGS && process.argv.length <= 2) {
 	getLogger().log(`Base URL: ${serviceConfig.baseURL}`);
-	getLogger().log(JSON.stringify(serviceConfig.headers));
+	getLogger().log(`HTTP client configured for ${serviceConfig.serviceKey}`);
 }
 
 // Resolve headers for bulk (multipart + token)
@@ -71,11 +71,14 @@ const isRetryable = err =>
 	RETRYABLE_CODES.has(err.code) ||
 	err.response?.status >= 500;
 const hasStream = config => config.data && typeof config.data.pipe === 'function';
+const IDEMPOTENT_METHODS = new Set(['get', 'head', 'options']);
 
-const applyRetry = instance => {
+// Reports must not be resent after an ambiguous failure (e.g. a timeout after the API has already saved them), as this would create duplicates
+const applyRetry = (instance, { retryWrites = true } = {}) => {
 	instance.interceptors.response.use(null, async err => {
 		const config = err.config;
 		if (!config) throw err;
+		if (!retryWrites && !IDEMPOTENT_METHODS.has((config.method || 'get').toLowerCase())) throw err;
 
 		config.__retryCount ??= 0;
 		if (config.__retryCount >= MAX_RETRIES || !isRetryable(err) || hasStream(config)) throw err;
@@ -91,7 +94,8 @@ const applyRetry = instance => {
 	});
 };
 
-[axiosGeneric, axiosService, axiosBulk, axiosSefinek, axiosWebhook, axiosCloudflare].forEach(applyRetry);
+[axiosGeneric, axiosSefinek, axiosWebhook, axiosCloudflare].forEach(instance => applyRetry(instance));
+[axiosService, axiosBulk].forEach(instance => applyRetry(instance, { retryWrites: false }));
 
 module.exports = Object.freeze({
 	axiosGeneric, // Generic client without baseURL
