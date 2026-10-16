@@ -1,10 +1,10 @@
 const { dirname } = require('node:path');
 const fs = require('node:fs/promises');
-const normalizeIP = require('../normalizeIP.js');
-const resolvePath = require('../pathResolver.js');
+const normalizeIP = require('../ip/normalizeIP.js');
+const resolvePath = require('../core/pathResolver.js');
 const { CACHE_FILE, IP_REPORT_COOLDOWN } = require('../../config.js').MAIN;
 const { queueSnapshotWrite, atomicWriteFile } = require('./writeQueue.js');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 const reportedIPs = new Map();
 const RESOLVED_CACHE_FILE = resolvePath(CACHE_FILE);

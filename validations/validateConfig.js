@@ -1,5 +1,5 @@
 const path = require('node:path');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 const configPath = path.resolve(__dirname, '..', '..', 'config.js');
 

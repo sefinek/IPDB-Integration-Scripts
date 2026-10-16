@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const TailFile = require('@logdna/tail-file');
 const split2 = require('split2');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 /**
  * Starts tailing a log file, calling onLine for each new line.

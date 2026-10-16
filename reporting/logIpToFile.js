@@ -1,9 +1,9 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const ipSanitizer = require('./ipSanitizer.js');
-const logger = require('../scripts/logger.js');
-const resolvePath = require('./pathResolver.js');
-const { LOG_IP_HISTORY_ENABLED, LOG_IP_HISTORY_DIR } = require('../config.js').MAIN;
+const ipSanitizer = require('../ip/ipSanitizer.js');
+const logger = require('../core/logger.js');
+const resolvePath = require('../core/pathResolver.js');
+const { LOG_IP_HISTORY_ENABLED, LOG_IP_HISTORY_DIR } = require('../../config.js').MAIN;
 
 const BASE_DIR = resolvePath(LOG_IP_HISTORY_DIR);
 

@@ -3,8 +3,8 @@ setup();
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseHomeNet } = require('../suricata/homeNet.js');
-const createPolicy = require('../suricata/reportPolicy.js');
+const { parseHomeNet } = require('../integrations/suricata/homeNet.js');
+const createPolicy = require('../integrations/suricata/reportPolicy.js');
 
 const homeNet = parseHomeNet('[10.0.0.0/8,2a01:11bf:4404:9000::/56]');
 

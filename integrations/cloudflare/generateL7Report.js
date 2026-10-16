@@ -1,8 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const PAYLOAD = require('./generateFirewallQuery.js');
-const { axiosCloudflare } = require('../axios.js');
-const logger = require('../../logger.js');
+const { axiosCloudflare } = require('../../services/axios.js');
+const logger = require('../../core/logger.js');
 const { MAIN } = require('../../../config.js');
 
 const ensureFile = filePath => {

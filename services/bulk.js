@@ -7,9 +7,9 @@ const { axiosBulk } = require('./axios.js');
 const { saveReportedIPs, markIPAsReported } = require('./cache.js');
 const ABUSE_STATE = require('./state.js');
 const { queueSnapshotWrite, atomicWriteFile } = require('./writeQueue.js');
-const { truncateComment } = require('../comment.js');
+const { truncateComment } = require('../reporting/comment.js');
 const uploadSnapshot = require('./bulkUpload.js');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 const BULK_REPORT_BUFFER = new Map();
 const BUFFER_FILE = path.join(__dirname, '..', '..', 'tmp', 'bulk-report-buffer.csv');

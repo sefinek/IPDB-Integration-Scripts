@@ -3,7 +3,7 @@ const { logger } = setup();
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { FLAGS, createFlagCollection } = require('../flags.js');
+const { FLAGS, createFlagCollection } = require('../reporting/flags.js');
 
 test('an empty collection falls back to the default category', () => {
 	const flags = createFlagCollection();

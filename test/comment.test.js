@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { MAX_COMMENT_LENGTH, truncateComment, joinWithinLimit } = require('../comment.js');
+const { MAX_COMMENT_LENGTH, truncateComment, joinWithinLimit } = require('../reporting/comment.js');
 
 test('truncateComment leaves short comments and non-strings unchanged', () => {
 	assert.equal(truncateComment('short'), 'short');

@@ -1,8 +1,8 @@
 const semver = require('semver');
 const { CronJob } = require('cron');
 const { axiosGeneric } = require('./axios.js');
-const { version, repoSlug, repoUrl } = require('../repo.js');
-const logger = require('../logger.js');
+const { version, repoSlug, repoUrl } = require('../core/repo.js');
+const logger = require('../core/logger.js');
 
 const PACKAGE_JSON_URL = `https://raw.githubusercontent.com/${repoSlug}/main/package.json`;
 const CHECK_SCHEDULE = '0 */12 * * *';

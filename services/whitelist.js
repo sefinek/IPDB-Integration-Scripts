@@ -1,9 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const ipaddr = require('ipaddr.js');
-const normalizeIP = require('../normalizeIP.js');
-const logger = require('../logger.js');
-const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
+const normalizeIP = require('../ip/normalizeIP.js');
+const logger = require('../core/logger.js');
+const isSpecialPurposeIP = require('../ip/isSpecialPurposeIP.js');
 
 const filePath = path.resolve(__dirname, '..', '..', 'whitelist.txt');
 let whitelistedIPs = new Set();

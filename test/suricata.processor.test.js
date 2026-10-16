@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const createProcessor = require('../suricata/createProcessor.js');
+const createProcessor = require('../integrations/suricata/createProcessor.js');
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 

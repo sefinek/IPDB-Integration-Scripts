@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const normalizeIP = require('../normalizeIP.js');
-const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
+const normalizeIP = require('../ip/normalizeIP.js');
+const isSpecialPurposeIP = require('../ip/isSpecialPurposeIP.js');
 
 test('normalizeIP returns the canonical form of IPv4 and IPv6 addresses', () => {
 	assert.equal(normalizeIP('8.8.8.8'), '8.8.8.8');

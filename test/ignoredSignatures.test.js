@@ -3,7 +3,7 @@ const { logger } = setup({ USE_BUILT_IN_IGNORED_SIGNATURES: true, IGNORED_SIGNAT
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { GLOBAL_IGNORED, isIgnored, getDescription } = require('../suricata/ignoredSignatures.js');
+const { GLOBAL_IGNORED, isIgnored, getDescription } = require('../integrations/suricata/ignoredSignatures.js');
 
 test('built-in signatures are ignored with their description', () => {
 	for (const [id, description] of Object.entries(GLOBAL_IGNORED)) {

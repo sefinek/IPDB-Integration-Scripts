@@ -1,10 +1,10 @@
 const axios = require('axios');
-const { version, repoName, repoUrl } = require('../repo.js');
+const { version, repoName, repoUrl } = require('../core/repo.js');
 const { SERVER_ID, EXTENDED_LOGS, SNIFFCAT_API_KEY, ABUSEIPDB_API_KEY, SEFIN_API_SECRET_TOKEN, CLOUDFLARE_API_KEY } = require('../../config.js').MAIN;
 
 // Lazy-load logger
 let logger;
-const getLogger = () => logger || (logger = require('../logger.js'));
+const getLogger = () => logger || (logger = require('../core/logger.js'));
 
 const DEFAULT_HEADERS = {
 	'User-Agent': `Mozilla/5.0 (compatible; ${repoName}/${version}; +${repoUrl})`,

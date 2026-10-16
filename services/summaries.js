@@ -1,7 +1,7 @@
 const { CronJob } = require('cron');
 const fs = require('node:fs/promises');
-const logger = require('../logger.js');
-const resolvePath = require('../pathResolver.js');
+const logger = require('../core/logger.js');
+const resolvePath = require('../core/pathResolver.js');
 const { SERVER_ID, EXTENDED_LOGS, CACHE_FILE } = require('../../config.js').MAIN;
 
 const RESOLVED_CACHE_FILE = resolvePath(CACHE_FILE);

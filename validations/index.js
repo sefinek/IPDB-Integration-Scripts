@@ -1,7 +1,7 @@
-const { repoName } = require('../repo.js');
+const { repoName } = require('../core/repo.js');
 const validateConfig = require('./validateConfig.js');
 const { rules: common, deprecated, services } = require('./common.js');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 const PROJECT_RULES = {
 	suricata: require('./suricata.js'),

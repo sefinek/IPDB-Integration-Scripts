@@ -32,6 +32,19 @@
 | `window`    | TCP window size                                      |
 | `urgp`      | TCP urgent pointer                                   |
 
+## Layout
+| Directory       | Contents                                                              |
+|-----------------|-----------------------------------------------------------------------|
+| `core/`         | Logger, repository metadata, path resolution, CLI help                |
+| `ip/`           | IP normalization, special-purpose ranges, sanitizing                  |
+| `reporting/`    | Report comments, abuse category flags, timestamps                     |
+| `services/`     | API clients, cache, bulk reports, whitelist, file tailing, updates   |
+| `integrations/` | Integration-specific logic (`suricata/`, `honeypots/`, `cloudflare/`) |
+| `banners/`      | Startup banners                                                       |
+| `validations/`  | Config validation                                                     |
+
+The `.js` files in the root, `suricata/`, `honeypots/` and `services/cloudflare/` are deprecated stubs that re-export modules from their new location. They are kept so older `index.js` files keep working.
+
 ## Tests
 Run from the root of any integration project (requires its `node_modules` and `config.js`):
 ```bash

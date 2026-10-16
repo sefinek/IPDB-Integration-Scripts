@@ -2,9 +2,9 @@ const { networkInterfaces } = require('node:os');
 const https = require('node:https');
 const { CronJob } = require('cron');
 const { axiosSefinek } = require('./axios.js');
-const isSpecialPurposeIP = require('../isSpecialPurposeIP.js');
-const normalizeIP = require('../normalizeIP.js');
-const logger = require('../logger.js');
+const isSpecialPurposeIP = require('../ip/isSpecialPurposeIP.js');
+const normalizeIP = require('../ip/normalizeIP.js');
+const logger = require('../core/logger.js');
 const { IP_ASSIGNMENT, IP_REFRESH_SCHEDULE, IPv6_SUPPORT } = require('../../config.js').MAIN;
 
 const IP_API_URL = 'https://api.sefinek.net/api/v2/ip';

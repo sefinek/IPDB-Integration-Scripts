@@ -1,22 +1,2 @@
-const { axiosGeneric } = require('../axios.js');
-const logger = require('../../logger.js');
-
-module.exports = async () => {
-	try {
-		const res = await axiosGeneric.get('https://api.sefinek.net/api/v2/filter-rules');
-		const data = res.data;
-		if (!data.success || typeof data !== 'object') {
-			throw new Error(`Sefinek API error: Invalid response (success=${data.success})`);
-		}
-
-		const { userAgents, domains, endpoints, imgExtensions, lastUpdate } = data;
-		if (!Array.isArray(userAgents) || !Array.isArray(domains) || !Array.isArray(endpoints) || !Array.isArray(imgExtensions)) {
-			throw new Error('Sefinek API error: Response is missing expected arrays');
-		}
-
-		logger.success(`Filter rules loaded from api.sefinek.net, last update: ${lastUpdate}`);
-		return { userAgents, domains, endpoints, imgExtensions, lastUpdate };
-	} catch (err) {
-		throw new Error(`Failed to fetch filter rules: ${err.message}`, { cause: err });
-	}
-};
+// Deprecated path kept for integrations that still require it. Use integrations/cloudflare/getFilterRules.js instead.
+module.exports = require('../../integrations/cloudflare/getFilterRules.js');

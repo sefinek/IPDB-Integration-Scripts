@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { createTempDir } = require('./helpers.js');
-const { loadHomeNet, parseHomeNet } = require('../suricata/homeNet.js');
+const { loadHomeNet, parseHomeNet } = require('../integrations/suricata/homeNet.js');
 
 const YAML = `%YAML 1.1
 ---

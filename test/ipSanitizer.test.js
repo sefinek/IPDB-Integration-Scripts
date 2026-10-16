@@ -4,7 +4,7 @@ stubModule(scriptsPath('services/ipFetcher.js'), { getServerIPs: () => ['203.0.1
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const ipSanitizer = require('../ipSanitizer.js');
+const ipSanitizer = require('../ip/ipSanitizer.js');
 
 test('server IPs are masked in logged text', () => {
 	assert.equal(ipSanitizer('ssh root@203.0.113.10 -p 22'), 'ssh root@[SOME-IP] -p 22');

@@ -2,8 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const os = require('node:os');
 const path = require('node:path');
-const formatTimestamp = require('../formatTimestamp.js');
-const resolvePath = require('../pathResolver.js');
+const formatTimestamp = require('../reporting/formatTimestamp.js');
+const resolvePath = require('../core/pathResolver.js');
 
 test('formatTimestamp returns ISO 8601 without milliseconds', () => {
 	assert.equal(formatTimestamp('2026-10-15T12:34:56.789Z'), '2026-10-15T12:34:56Z');

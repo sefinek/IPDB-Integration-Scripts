@@ -1,6 +1,6 @@
-const { version, authorMeta, prettyName, repoUrl, license } = require('../repo.js');
+const { version, authorMeta, prettyName, repoUrl, license } = require('../core/repo.js');
 const { color, reset, headerText, authorText, donate, sniffcat } = require('./utils/helper.js');
-const logger = require('../logger.js');
+const logger = require('../core/logger.js');
 
 module.exports = () => {
 	console.log(`

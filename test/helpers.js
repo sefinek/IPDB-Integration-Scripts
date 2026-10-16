@@ -42,7 +42,7 @@ const createLogger = () => {
 };
 
 /**
- * Replaces the parent project's config.js and scripts/logger.js before any tested module is required.
+ * Replaces the parent project's config.js and scripts/core/logger.js before any tested module is required.
  * Must be called at the top of every test file, because modules read the config at import time.
  * Each test file runs in a separate process, so the stubs do not leak between files.
  */
@@ -51,7 +51,7 @@ const setup = (main = {}, extra = {}) => {
 
 	const logger = createLogger();
 	stubModule(CONFIG_PATH, { MAIN: { ...DEFAULT_CONFIG, ...main }, ...extra });
-	stubModule(path.join(SCRIPTS_DIR, 'logger.js'), logger);
+	stubModule(path.join(SCRIPTS_DIR, 'core', 'logger.js'), logger);
 
 	return { logger };
 };
