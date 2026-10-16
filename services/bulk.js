@@ -6,7 +6,7 @@ const path = require('node:path');
 const { axiosBulk } = require('./axios.js');
 const { saveReportedIPs, markIPAsReported } = require('./cache.js');
 const ABUSE_STATE = require('./state.js');
-const { queueWrite, atomicWriteFile } = require('./writeQueue.js');
+const { queueSnapshotWrite, atomicWriteFile } = require('./writeQueue.js');
 const { truncateComment } = require('../comment.js');
 const uploadSnapshot = require('./bulkUpload.js');
 const logger = require('../logger.js');
@@ -20,7 +20,7 @@ const BUFFER_COLUMNS = [...API_COLUMNS, 'Context'];
 
 let currentUpload = null;
 
-const saveBufferToFile = () => queueWrite(BUFFER_FILE, async () => {
+const saveBufferToFile = () => queueSnapshotWrite(BUFFER_FILE, async () => {
 	try {
 		if (!BULK_REPORT_BUFFER.size) {
 			await fs.rm(BUFFER_FILE, { force: true });

@@ -64,6 +64,21 @@ test('loading skips invalid IPs, invalid times and future timestamps', async () 
 	assert.deepEqual(Object.fromEntries(reportedIPs), { '8.8.8.8': time, '2001:db8::1': time });
 });
 
+test('expired entries are skipped on load and removed on save', async () => {
+	const expired = now() - COOLDOWN / 1000;
+	fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
+	fs.writeFileSync(CACHE_FILE, `8.8.8.8 ${expired}
+1.1.1.1 ${now()}`);
+
+	await loadReportedIPs();
+	assert.deepEqual([...reportedIPs.keys()], ['1.1.1.1']);
+
+	reportedIPs.set('9.9.9.9', expired - 100);
+	await saveReportedIPs();
+	assert.deepEqual([...reportedIPs.keys()], ['1.1.1.1']);
+	assert.equal(fs.readFileSync(CACHE_FILE, 'utf8'), `1.1.1.1 ${reportedIPs.get('1.1.1.1')}`);
+});
+
 test('duplicate entries keep the most recent time', async () => {
 	const time = now();
 	fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });

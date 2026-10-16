@@ -100,7 +100,8 @@ test('a report error is logged and does not block the IP', async () => {
 test('non-alert and malformed lines are ignored', async () => {
 	const s = setup();
 	await s.processor.processLine('{"event_type":"flow"}');
-	await s.processor.processLine('{broken "alert"');
+	await s.processor.processLine('{"event_type":"stats","stats":{"detect":{"alert":5}}}');
+	await s.processor.processLine('{broken "event_type":"alert"');
 	await s.processor.processLine(undefined);
 
 	assert.deepEqual(s.reports, []);

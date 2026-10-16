@@ -26,11 +26,6 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 	// Expects an already normalized address
 	const isLocal = ip => isSpecialPurposeIP(ip).is || isHomeNet(ip) || getServerIPs().includes(ip);
 
-	const canReportIP = value => {
-		const ip = normalizeIP(value);
-		return Boolean(ip) && !isLocal(ip) && !isWhitelisted(ip);
-	};
-
 	/**
 	 * Only an external host that opened a connection to a local one is reported.
 	 * Hosts contacted from the local network (DNS resolvers, CDNs, P2P peers) are never reported, even if they trigger an alert.
@@ -98,5 +93,5 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 		};
 	};
 
-	return Object.freeze({ evaluate, canReportIP });
+	return Object.freeze({ evaluate });
 };

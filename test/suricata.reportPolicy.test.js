@@ -79,9 +79,6 @@ test('special-purpose and server IPs are never reported', () => {
 	const policy = policyFor({}, { getServerIPs: () => ['2001:4860:4860::8888'] });
 	assert.equal(policy.evaluate(event({ src_ip: '192.168.1.1' })), null);
 	assert.equal(policy.evaluate(event({ src_ip: '2001:4860:4860:0:0:0:0:8888' })), null);
-	assert.equal(policy.canReportIP('2001:4860:4860::8888'), false);
-	assert.equal(policy.canReportIP('8.8.8.8'), true);
-	assert.equal(policy.canReportIP('invalid'), false);
 });
 
 test('a public server IP outside HOME_NET counts as local', () => {

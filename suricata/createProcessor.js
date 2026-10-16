@@ -56,7 +56,8 @@ module.exports = ({
 	};
 
 	const processLine = async line => {
-		if (!accepting || !line?.includes('"alert"')) return;
+		// eve.json is compact JSON. A plain '"alert"' would also match every stats event, which has an alert counter.
+		if (!accepting || !line?.includes('"event_type":"alert"')) return;
 
 		let event;
 		try {

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { createTempDir } = require('./helpers.js');
-const { queueWrite, atomicWriteFile } = require('../services/writeQueue.js');
+const { queueWrite, queueSnapshotWrite, atomicWriteFile } = require('../services/writeQueue.js');
 
 test('writes to the same file run sequentially', async () => {
 	const file = path.join(createTempDir(), 'queue.txt');
@@ -43,6 +43,41 @@ test('different paths to the same file share one queue', async () => {
 
 	await Promise.all([first, second]);
 	assert.deepEqual(order, [1, 2]);
+});
+
+test('snapshot writes waiting in the queue are coalesced', async () => {
+	const file = path.join(createTempDir(), 'snapshot.txt');
+	let runs = 0;
+	const write = () => queueSnapshotWrite(file, async () => {
+		runs++;
+		await new Promise(resolve => setTimeout(resolve, 10));
+	});
+
+	const first = write();
+	await new Promise(resolve => setImmediate(resolve));
+	const second = write();
+	const third = write();
+
+	assert.equal(second, third);
+	await Promise.all([first, second, third]);
+	assert.equal(runs, 2);
+
+	await write();
+	assert.equal(runs, 3);
+});
+
+test('a snapshot write waits for a regular write to the same file', async () => {
+	const file = path.join(createTempDir(), 'mixed.txt');
+	const order = [];
+
+	const regular = queueWrite(file, async () => {
+		await new Promise(resolve => setTimeout(resolve, 20));
+		order.push('regular');
+	});
+	const snapshot = queueSnapshotWrite(file, async () => order.push('snapshot'));
+
+	await Promise.all([regular, snapshot]);
+	assert.deepEqual(order, ['regular', 'snapshot']);
 });
 
 test('atomicWriteFile replaces the file and leaves no temporary file', async () => {
