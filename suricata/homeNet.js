@@ -57,7 +57,7 @@ const loadHomeNet = filePath => {
 	try {
 		content = fs.readFileSync(filePath, 'utf8');
 	} catch (err) {
-		throw new Error(`Cannot read ${filePath}. The user running this script must have read access to it (e.g. by being a member of the 'suricata' group), or set HOME_NET in config.js.`, { cause: err });
+		throw new Error(`Cannot read ${filePath}. The user running this script must have read access to it, e.g. by being a member of the 'suricata' group.`, { cause: err });
 	}
 
 	const matches = [...content.matchAll(HOME_NET_LINE)];
