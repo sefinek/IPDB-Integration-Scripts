@@ -117,6 +117,15 @@ const MAPPINGS = Object.freeze({
 		['MONGODB', 25],
 		['REDIS', 26],
 		['OTHER_ABUSE', 27],
+
+		// Flags without their own SniffCat category, mapped to the closest one instead of the generic fallback
+		['WEB_APP_ATTACK', 21], // HTTP/HTTPS: suspicious or malicious HTTP/S requests
+		['IGNORING_ROBOTS_TXT', 15], // Bad Web Bot: ignoring robots.txt
+		['IOT_TARGETED', 11], // Hacking: attempts to gain access
+		['WEB_SPAM', 14],
+		['EMAIL_SPAM', 14],
+		['BLOG_SPAM', 14],
+		['PING_OF_DEATH', 3],
 	]),
 	AbuseIPDB: new Map([
 		['DNS_COMPROMISE', 1],
@@ -142,6 +151,10 @@ const MAPPINGS = Object.freeze({
 		['WEB_APP_ATTACK', 21],
 		['SSH', 22],
 		['IOT_TARGETED', 23],
+
+		// Flags without their own AbuseIPDB category, mapped to the closest one instead of the generic fallback
+		['MASS_SCANNER', 14], // Port Scan
+		['IGNORING_ROBOTS_TXT', 19], // Bad Web Bot: crawlers that do not honor robots.txt
 	]),
 });
 

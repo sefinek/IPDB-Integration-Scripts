@@ -32,6 +32,15 @@ test('flags sharing the fallback ID produce it only once', () => {
 	assert.deepEqual(flags.toIDs('SniffCat'), [11, 16, 22]);
 });
 
+test('flags without an own category use the closest one, not the fallback', () => {
+	assert.deepEqual(createFlagCollection().add(FLAGS.WEB_APP_ATTACK).toIDs('SniffCat'), [21]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.IGNORING_ROBOTS_TXT).toIDs('SniffCat'), [15]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.PORT_SCAN, FLAGS.IOT_TARGETED).toIDs('SniffCat'), [4, 11]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.PORT_SCAN, FLAGS.EMAIL_SPAM).toIDs('SniffCat'), [4, 14]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.MASS_SCANNER).toIDs('AbuseIPDB'), [14]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.IGNORING_ROBOTS_TXT).toIDs('AbuseIPDB'), [19]);
+});
+
 test('duplicate flags are added only once', () => {
 	const flags = createFlagCollection().add(FLAGS.SSH, FLAGS.SSH).add(FLAGS.SSH);
 	assert.deepEqual(flags.list(), ['SSH']);
