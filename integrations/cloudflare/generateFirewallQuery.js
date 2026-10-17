@@ -6,10 +6,14 @@ module.exports = zoneTag => {
 	const variables = {
 		zoneTag,
 		filter: {
-			datetime_geq: new Date(Date.now() - MAIN.CLOUDFLARE_TIME_RANGE || 12 * 60 * 60 * 1000).toISOString(),
+			datetime_geq: new Date(Date.now() - (MAIN.CLOUDFLARE_TIME_RANGE || 12 * 60 * 60 * 1000)).toISOString(),
 			AND: [
 				{ action_neq: 'allow' },
 				{ action_neq: 'skip' },
+				// Issuing a challenge is not evidence of abuse: it is shown to anyone a rule is unsure about, including real visitors
+				{ action_neq: 'challenge' },
+				{ action_neq: 'jschallenge' },
+				{ action_neq: 'managed_challenge' },
 				{ action_neq: 'challenge_solved' },
 				{ action_neq: 'challenge_failed' },
 				{ action_neq: 'challenge_bypassed' },
