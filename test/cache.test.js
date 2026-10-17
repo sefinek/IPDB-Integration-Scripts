@@ -64,19 +64,21 @@ test('loading skips invalid IPs, invalid times and future timestamps', async () 
 	assert.deepEqual(Object.fromEntries(reportedIPs), { '8.8.8.8': time, '2001:db8::1': time });
 });
 
-test('expired entries are skipped on load and removed on save', async () => {
-	const expired = now() - COOLDOWN / 1000;
+test('entries past the cooldown are kept for two days for the daily summary', async () => {
+	const pastCooldown = now() - COOLDOWN / 1000;
+	const pastRetention = now() - 2 * 24 * 60 * 60;
 	fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
-	fs.writeFileSync(CACHE_FILE, `8.8.8.8 ${expired}
-1.1.1.1 ${now()}`);
+	fs.writeFileSync(CACHE_FILE, `8.8.8.8 ${pastCooldown}\n4.4.4.4 ${pastRetention}\n1.1.1.1 ${now()}`);
 
 	await loadReportedIPs();
-	assert.deepEqual([...reportedIPs.keys()], ['1.1.1.1']);
+	assert.deepEqual([...reportedIPs.keys()].sort(), ['1.1.1.1', '8.8.8.8']);
+	assert.equal(isIPReportedRecently('8.8.8.8'), false);
+	assert.equal(isIPReportedRecently('1.1.1.1'), true);
 
-	reportedIPs.set('9.9.9.9', expired - 100);
+	reportedIPs.set('9.9.9.9', pastRetention - 100);
 	await saveReportedIPs();
-	assert.deepEqual([...reportedIPs.keys()], ['1.1.1.1']);
-	assert.equal(fs.readFileSync(CACHE_FILE, 'utf8'), `1.1.1.1 ${reportedIPs.get('1.1.1.1')}`);
+	assert.deepEqual([...reportedIPs.keys()].sort(), ['1.1.1.1', '8.8.8.8']);
+	assert.equal(fs.readFileSync(CACHE_FILE, 'utf8').split('\n').length, 2);
 });
 
 test('duplicate entries keep the most recent time', async () => {

@@ -32,7 +32,7 @@ const summaryEmbed = async () => {
 		try {
 			await fs.access(RESOLVED_CACHE_FILE);
 			data = (await fs.readFile(RESOLVED_CACHE_FILE, 'utf8')).trim();
-			if (!data) return logger.warn(`Daily summary » Cache file exists but is empty: ${RESOLVED_CACHE_FILE}`);
+			if (!data) return logger.warn(`Daily summary » No reports found for ${yesterdayString}`);
 		} catch (err) {
 			return logger.warn(`Daily summary » Failed to access/read cache file: ${err.message}`);
 		}

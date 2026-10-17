@@ -10,8 +10,13 @@ const reportedIPs = new Map();
 const RESOLVED_CACHE_FILE = resolvePath(CACHE_FILE);
 const IP_REPORT_COOLDOWN_SECONDS = IP_REPORT_COOLDOWN / 1000;
 
+// The midnight summary (summaries.js) counts yesterday's reports from this file, so entries are kept
+// for at least two days even when the cooldown is shorter
+const RETENTION_SECONDS = Math.max(IP_REPORT_COOLDOWN_SECONDS, 2 * 24 * 60 * 60);
+
 const nowSeconds = () => Math.floor(Date.now() / 1000);
-const isExpired = (time, now) => now - time >= IP_REPORT_COOLDOWN_SECONDS;
+const isInCooldown = (time, now) => now - time < IP_REPORT_COOLDOWN_SECONDS;
+const isExpired = (time, now) => now - time >= RETENTION_SECONDS;
 
 const ensureCacheDir = async () => {
 	const dir = dirname(RESOLVED_CACHE_FILE);
@@ -54,7 +59,7 @@ const loadReportedIPs = async () => {
 	}
 };
 
-// Expired entries are dropped here, so neither the map nor the file grows without limit
+// Entries past the retention period are dropped here, so neither the map nor the file grows without limit
 const saveReportedIPs = () => {
 	if (!RESOLVED_CACHE_FILE) return Promise.resolve();
 	return queueSnapshotWrite(RESOLVED_CACHE_FILE, async () => {
@@ -77,7 +82,7 @@ const saveReportedIPs = () => {
 const isIPReportedRecently = ip => {
 	const reportedTime = reportedIPs.get(normalizeIP(ip));
 	if (!reportedTime) return false;
-	return !isExpired(reportedTime, nowSeconds());
+	return isInCooldown(reportedTime, nowSeconds());
 };
 
 const markIPAsReported = ip => {
