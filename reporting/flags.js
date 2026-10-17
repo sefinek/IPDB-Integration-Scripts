@@ -167,9 +167,8 @@ const createFlagCollection = () => {
 		const currentFlags = list();
 		if (currentFlags.length === 0) return [fallbackID];
 
-		const ids = currentFlags
-			.map(f => map.get(f) ?? fallbackID)
-			.filter(id => typeof id === 'number');
+		// Flags missing in the integration share the fallback ID, so duplicates are removed
+		const ids = [...new Set(currentFlags.map(f => map.get(f) ?? fallbackID))].filter(id => typeof id === 'number');
 
 		return ids.length > 0 ? ids : [fallbackID];
 	};

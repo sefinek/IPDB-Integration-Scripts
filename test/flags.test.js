@@ -26,6 +26,12 @@ test('flags missing in an integration use its fallback ID', () => {
 	assert.deepEqual(flags.toIDs('AbuseIPDB'), [15, 8]);
 });
 
+test('flags sharing the fallback ID produce it only once', () => {
+	const flags = createFlagCollection().add(FLAGS.HACKING, FLAGS.PATH_TRAVERSAL, FLAGS.RDP);
+	assert.deepEqual(flags.toIDs('AbuseIPDB'), [15]);
+	assert.deepEqual(flags.toIDs('SniffCat'), [11, 16, 22]);
+});
+
 test('duplicate flags are added only once', () => {
 	const flags = createFlagCollection().add(FLAGS.SSH, FLAGS.SSH).add(FLAGS.SSH);
 	assert.deepEqual(flags.list(), ['SSH']);

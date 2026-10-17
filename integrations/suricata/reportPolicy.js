@@ -4,7 +4,8 @@ const { FLAGS, createFlagCollection } = require('../../reporting/flags.js');
 
 const MAX_CLOCK_SKEW = 5 * 60 * 1000;
 
-// Suricata classtypes (alert.category) mapped to abuse flags. Everything else is reported as HACKING.
+// The main category comes from the classtype (alert.category), then from the ruleset category in the
+// signature name ("ET SCAN ...", "ET DOS ..."), and falls back to HACKING.
 const CATEGORY_FLAGS = {
 	'Detection of a Network Scan': [FLAGS.PORT_SCAN],
 	'Attempted Information Leak': [FLAGS.PORT_SCAN],
@@ -13,7 +14,43 @@ const CATEGORY_FLAGS = {
 	'Denial of Service': [FLAGS.DDOS_ATTACK],
 };
 
-const toCategories = category => createFlagCollection().add(...(CATEGORY_FLAGS[category] ?? [FLAGS.HACKING])).toString();
+const RULESET_CATEGORY_FLAGS = {
+	SCAN: [FLAGS.PORT_SCAN],
+	DOS: [FLAGS.DDOS_ATTACK],
+	WEB_SERVER: [FLAGS.WEB_APP_ATTACK],
+	WEB_SPECIFIC_APPS: [FLAGS.WEB_APP_ATTACK],
+	USER_AGENTS: [FLAGS.BAD_WEB_BOT],
+	COMPROMISED: [FLAGS.EXPLOITED_HOST],
+};
+
+// Attack techniques named in the signature. They only add detail to the main category.
+const TECHNIQUE_FLAGS = [
+	[/SQL Injection|\bSQLi\b/i, FLAGS.SQL_INJECTION],
+	[/(?:Directory|Path) Traversal/i, FLAGS.PATH_TRAVERSAL],
+	[/Command Injection|Remote Code Execution|\bRCE\b/i, FLAGS.COMMAND_INJECTION],
+	[/Brute ?Force|Password Guess/i, FLAGS.BRUTE_FORCE],
+	[/\b(?:Mirai|Mozi|Gafgyt|Hajime)\b/i, FLAGS.IOT_TARGETED],
+];
+
+// The attacked service is taken from the protocol Suricata detected (app_proto), or from the local port when the
+// protocol is unknown. Signature text is not used, because many rules name a service they do not target
+// (e.g. "Redis Attempted SSH Key Upload", "Nagios XI Web SSH Terminal XSS").
+const SERVICE_FLAGS = { ssh: FLAGS.SSH, telnet: FLAGS.TELNET, smb: FLAGS.SMB, rdp: FLAGS.RDP, redis: FLAGS.REDIS, mongodb: FLAGS.MONGODB, ftp: FLAGS.FTP };
+const SERVICE_PORTS = { 21: 'ftp', 22: 'ssh', 2222: 'ssh', 23: 'telnet', 2323: 'telnet', 139: 'smb', 445: 'smb', 3389: 'rdp', 6379: 'redis', 27017: 'mongodb' };
+
+const RULESET_CATEGORY = /^(?:ET|ETPRO|GPL)\s+([A-Z_]+)\b/;
+
+const toCategories = ({ category, signature, appProto, localPort }) => {
+	const rulesetCategory = signature.match(RULESET_CATEGORY)?.[1];
+	const main = CATEGORY_FLAGS[category] ?? RULESET_CATEGORY_FLAGS[rulesetCategory] ?? [FLAGS.HACKING];
+	const techniques = TECHNIQUE_FLAGS.filter(([pattern]) => pattern.test(signature)).map(([, flag]) => flag);
+
+	const service = appProto && appProto !== 'failed' ? appProto : SERVICE_PORTS[localPort];
+	// AbuseIPDB category 5 is "FTP Brute-Force", so FTP is only added to brute-force attempts
+	const serviceFlag = service === 'ftp' && !techniques.includes(FLAGS.BRUTE_FORCE) ? null : SERVICE_FLAGS[service];
+
+	return createFlagCollection().add(...main, ...techniques, ...(serviceFlag ? [serviceFlag] : [])).toString();
+};
 
 const isPositiveInteger = value => Number.isSafeInteger(value) && value > 0;
 
@@ -66,6 +103,8 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 		const timestamp = typeof event.timestamp === 'string' ? Date.parse(event.timestamp) : NaN;
 		if (!Number.isFinite(timestamp) || timestamp > now() + MAX_CLOCK_SKEW) return skip(`Invalid alert timestamp: ${event.timestamp}`);
 
+		const appProto = typeof event.app_proto === 'string' ? event.app_proto : undefined;
+
 		// Only the metadata required to re-evaluate the alert later. No payloads or HTTP bodies.
 		const evidence = {
 			event_type: 'alert',
@@ -76,19 +115,23 @@ module.exports = (config, { isHomeNet, getServerIPs = () => [], isWhitelisted = 
 			dest_port: event.dest_port,
 			proto: event.proto,
 			alert: { signature_id: id, severity, signature, ...(category && { category }) },
+			...(appProto && { app_proto: appProto }),
 			...(initiator && { flow: { src_ip: initiator } }),
 			...(verdict && { verdict: { action: verdict } }),
 		};
 
+		// The attacked service runs on the local side, which is the source when the alert matched a reply
+		const localPort = srcIsLocal ? event.src_port : event.dest_port;
+
 		return {
 			srcIp: offender,
-			dpt: event.dest_port ?? 'N/A',
+			dpt: localPort ?? 'N/A',
 			proto: event.proto ?? 'N/A',
 			id,
 			severity,
 			signature,
 			timestamp,
-			categories: toCategories(category),
+			categories: toCategories({ category, signature, appProto, localPort }),
 			evidence,
 		};
 	};

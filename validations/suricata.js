@@ -6,4 +6,5 @@ module.exports = [
 	{ key: 'ALLOWED_VERDICT_ACTIONS', type: Array, nonEmpty: true, oneOf: ['alert', 'pass', 'drop'], default: ['alert', 'drop'] },
 	{ key: 'USE_BUILT_IN_IGNORED_SIGNATURES', type: Boolean },
 	{ key: 'IGNORED_SIGNATURES', type: Array },
+	{ key: 'DISCORD_ALERT_SEVERITY_THRESHOLD', type: Number, required: false, min: 1, max: 3 },
 ];
