@@ -155,6 +155,10 @@ const MAPPINGS = Object.freeze({
 		// Flags without their own AbuseIPDB category, mapped to the closest one instead of the generic fallback
 		['MASS_SCANNER', 14], // Port Scan
 		['IGNORING_ROBOTS_TXT', 19], // Bad Web Bot: crawlers that do not honor robots.txt
+		['MALWARE_HOSTING', 20], // Exploited Host: infected or hosting malicious content
+		['CNC_BEACONING', 20],
+		['CRYPTOJACKING', 20],
+		['PATH_TRAVERSAL', 21], // Web App Attack
 	]),
 });
 

@@ -27,9 +27,9 @@ test('flags missing in an integration use its fallback ID', () => {
 });
 
 test('flags sharing the fallback ID produce it only once', () => {
-	const flags = createFlagCollection().add(FLAGS.HACKING, FLAGS.PATH_TRAVERSAL, FLAGS.RDP);
+	const flags = createFlagCollection().add(FLAGS.HACKING, FLAGS.COMMAND_INJECTION, FLAGS.RDP);
 	assert.deepEqual(flags.toIDs('AbuseIPDB'), [15]);
-	assert.deepEqual(flags.toIDs('SniffCat'), [11, 16, 22]);
+	assert.deepEqual(flags.toIDs('SniffCat'), [11, 13, 22]);
 });
 
 test('flags without an own category use the closest one, not the fallback', () => {
@@ -39,6 +39,8 @@ test('flags without an own category use the closest one, not the fallback', () =
 	assert.deepEqual(createFlagCollection().add(FLAGS.PORT_SCAN, FLAGS.EMAIL_SPAM).toIDs('SniffCat'), [4, 14]);
 	assert.deepEqual(createFlagCollection().add(FLAGS.MASS_SCANNER).toIDs('AbuseIPDB'), [14]);
 	assert.deepEqual(createFlagCollection().add(FLAGS.IGNORING_ROBOTS_TXT).toIDs('AbuseIPDB'), [19]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.MALWARE_HOSTING, FLAGS.CNC_BEACONING).toIDs('AbuseIPDB'), [20]);
+	assert.deepEqual(createFlagCollection().add(FLAGS.WEB_APP_ATTACK, FLAGS.PATH_TRAVERSAL).toIDs('AbuseIPDB'), [21]);
 });
 
 test('duplicate flags are added only once', () => {
