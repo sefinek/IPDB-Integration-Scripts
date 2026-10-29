@@ -24,14 +24,17 @@ class Logger {
 		return {
 			discord: options.discord ?? defaultDiscord,
 			ping: options.ping ?? defaultPing,
+			highlight: options.highlight ?? false,
 		};
 	}
 
-	static print(msg, level = 0) {
+	static print(msg, level = 0, highlight = false) {
 		const { method, label, color: lvlColor } = this.#getLevel(level);
 		const fn = console[method] || console.log;
 
-		if (IS_PM2) {
+		if (highlight) {
+			fn(`\x1b[1;93m${label} ${msg}\x1b[0m`);
+		} else if (IS_PM2) {
 			fn(`${label} ${msg}`);
 		} else {
 			fn(`${lvlColor}${label} ${msg}${reset}`);
@@ -115,7 +118,7 @@ class Logger {
 	}
 
 	static log(msg, level = 0, options = {}) {
-		this.print(msg, level);
+		this.print(msg, level, options.highlight);
 
 		if (options.discord) {
 			this.webhook(msg, level, options.ping)

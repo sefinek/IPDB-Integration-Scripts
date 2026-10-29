@@ -1,6 +1,7 @@
 const { version, authorMeta, prettyName, repoUrl, license } = require('../core/repo.js');
 const { color, reset, donate, sniffcat } = require('./utils/helper.js');
 const logger = require('../core/logger.js');
+const showHoneypotWarning = require('./utils/honeypotWarning.js');
 
 module.exports = () => {
 	console.log(`
@@ -13,4 +14,5 @@ module.exports = () => {
 
 	logger.info(donate);
 	logger.info(sniffcat);
+	showHoneypotWarning();
 };
