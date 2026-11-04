@@ -24,6 +24,8 @@ module.exports = zoneTag => {
 				{ action_neq: 'managed_challenge_non_interactive_solved' },
 				{ action_neq: 'managed_challenge_interactive_solved' },
 				{ action_neq: 'managed_challenge_bypassed' },
+				// Cloudflare sets a category only for bots it has verified (by IP range, reverse DNS or signature). Blocking one is the zone's policy, not evidence of abuse
+				{ verifiedBotCategory: '' },
 			],
 		},
 	};
